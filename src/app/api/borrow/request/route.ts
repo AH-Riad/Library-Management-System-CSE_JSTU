@@ -8,22 +8,18 @@ export async function POST(req: Request) {
 
     const { userId, bookId } = await req.json();
 
-    if (!userId || !bookId) {
-      return NextResponse.json(
-        { success: false, message: "Missing data" },
-        { status: 400 },
-      );
-    }
-
     const existing = await UserBook.findOne({
       userId,
       bookId,
-      status: { $in: ["borrow_pending", "issued"] },
+      status: { $in: ["borrow_pending", "issued", "overdue"] },
     });
 
     if (existing) {
       return NextResponse.json(
-        { success: false, message: "Already requested or issued" },
+        {
+          success: false,
+          message: "Already active request exists",
+        },
         { status: 400 },
       );
     }
@@ -32,13 +28,11 @@ export async function POST(req: Request) {
       userId,
       bookId,
       status: "borrow_pending",
-      issueDate: null,
-      dueDate: null,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Borrow request sent",
+      message: "Borrow request created",
       record,
     });
   } catch (err) {

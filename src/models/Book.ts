@@ -12,21 +12,14 @@ const BookSchema = new mongoose.Schema(
       required: true,
     },
 
-    isbn: {
-      type: String,
-      unique: true,
-      required: true,
-    },
-
     category: {
       type: String,
       required: true,
     },
 
-    totalCopies: {
-      type: Number,
-      required: true,
-      default: 1,
+    image: {
+      type: String,
+      default: "",
     },
 
     availableCopies: {

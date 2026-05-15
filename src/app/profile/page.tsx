@@ -13,8 +13,13 @@ export default function ProfilePage() {
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/user/books");
+
+      // ⚠️ IMPORTANT: replace with your real userId from Clerk/session
+      const userId = "user_373IwGkB4avKnerIOwo7klUrEK7";
+
+      const res = await fetch(`/api/user/books?userId=${userId}`);
       const data = await res.json();
+
       setRecords(data.records || []);
     } catch (err) {
       console.log(err);

@@ -2,145 +2,340 @@
 
 import { useEffect, useState } from "react";
 
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "12345";
+
 export default function AdminPage() {
-  const [tab, setTab] = useState<"pending" | "issued">("pending");
-  const [pending, setPending] = useState<any[]>([]);
-  const [issued, setIssued] = useState<any[]>([]);
+  const [authorized, setAuthorized] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  const fetchData = async () => {
-    const p = await fetch("/api/admin/requests/pending");
-    const i = await fetch("/api/admin/requests/issued");
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [returnRequests, setReturnRequests] = useState<any[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-    const pData = await p.json();
-    const iData = await i.json();
+  // BOOK FORM STATES
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [category, setCategory] = useState("");
+  const [image, setImage] = useState("");
+  const [copies, setCopies] = useState(1);
 
-    setPending(pData.requests || []);
-    setIssued(iData.requests || []);
+  // LOGIN
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      setAuthorized(true);
+      localStorage.setItem("admin_auth", "true");
+    } else {
+      alert("Invalid credentials");
+    }
   };
 
-  const action = async (id: string, type: string) => {
+  // AUTH CHECK
+  useEffect(() => {
+    const auth = localStorage.getItem("admin_auth");
+    if (auth === "true") setAuthorized(true);
+  }, []);
+
+  // LOAD DATA
+  useEffect(() => {
+    if (!authorized) return;
+    fetchData();
+  }, [authorized]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const [pendingRes, returnRes, booksRes] = await Promise.all([
+        fetch("/api/admin/requests/pending"),
+        fetch("/api/admin/requests/return"),
+        fetch("/api/books"),
+      ]);
+
+      const pendingData = await pendingRes.json();
+      const returnData = await returnRes.json();
+      const booksData = await booksRes.json();
+
+      setPendingRequests(pendingData.requests || []);
+      setReturnRequests(returnData.requests || []);
+      setBooks(booksData.books || []);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ADD BOOK
+  const addBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("/api/books", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          author,
+          category,
+          image,
+          availableCopies: copies,
+        }),
+      });
+
+      const data = await res.json();
+
+      alert(data.message || "Book added");
+
+      // reset form
+      setTitle("");
+      setAuthor("");
+      setCategory("");
+      setImage("");
+      setCopies(1);
+
+      fetchData();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // DELETE BOOK
+  const deleteBook = async (id: string) => {
+    if (!confirm("Delete this book?")) return;
+
+    try {
+      const res = await fetch(`/api/books/${id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      alert(data.message || "Deleted");
+
+      fetchData();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // BORROW APPROVE
+  const approveBorrow = async (id: string) => {
     await fetch("/api/admin/approve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: id, action: type }),
+      body: JSON.stringify({ requestId: id }),
     });
 
     fetchData();
   };
 
-  const containerStyle: React.CSSProperties = {
-    display: "flex",
-    minHeight: "100vh",
-    background: "#f4f6f8",
-    fontFamily: "system-ui",
+  // RETURN APPROVE
+  const approveReturn = async (id: string) => {
+    await fetch("/api/admin/return", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId: id }),
+    });
+
+    fetchData();
   };
 
-  const sidebarStyle: React.CSSProperties = {
-    width: "240px",
-    background: "#111827",
-    color: "white",
-    padding: "20px",
+  const logout = () => {
+    localStorage.removeItem("admin_auth");
+    setAuthorized(false);
   };
 
-  const contentStyle: React.CSSProperties = {
-    flex: 1,
-    padding: "24px",
-  };
+  // LOGIN PAGE
+  if (!authorized) {
+    return (
+      <div style={center}>
+        <form onSubmit={handleLogin} style={card}>
+          <h1>Admin Login</h1>
 
-  const cardStyle: React.CSSProperties = {
-    background: "white",
-    borderRadius: "12px",
-    padding: "16px",
-    marginBottom: "12px",
-    border: "1px solid #e5e7eb",
-  };
+          <input
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={input}
+          />
 
-  const buttonStyle = (color: string): React.CSSProperties => ({
-    padding: "8px 12px",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    background: color,
-    color: "white",
-    marginTop: "10px",
-  });
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={input}
+          />
 
-  const list = tab === "pending" ? pending : issued;
+          <button style={btnBlue}>Login</button>
+        </form>
+      </div>
+    );
+  }
 
   return (
-    <div style={containerStyle}>
-      {/* SIDEBAR */}
-      <div style={sidebarStyle}>
-        <h2 style={{ marginBottom: "20px" }}>📚 Admin</h2>
-
-        <div
-          onClick={() => setTab("pending")}
-          style={{
-            padding: "10px",
-            cursor: "pointer",
-            background: tab === "pending" ? "#2563eb" : "transparent",
-            borderRadius: "8px",
-            marginBottom: "10px",
-          }}
-        >
-          📌 Pending
-        </div>
-
-        <div
-          onClick={() => setTab("issued")}
-          style={{
-            padding: "10px",
-            cursor: "pointer",
-            background: tab === "issued" ? "#2563eb" : "transparent",
-            borderRadius: "8px",
-          }}
-        >
-          📚 Issued
-        </div>
+    <div style={{ padding: 20 }}>
+      <div style={topBar}>
+        <h1>Admin Dashboard</h1>
+        <button onClick={logout} style={btnRed}>
+          Logout
+        </button>
       </div>
 
-      {/* MAIN */}
-      <div style={contentStyle}>
-        <h1 style={{ fontSize: "24px", marginBottom: "20px" }}>
-          {tab === "pending" ? "Pending Requests" : "Issued Books"}
-        </h1>
+      {/* ADD BOOK */}
+      <form onSubmit={addBook} style={card}>
+        <h2>Add Book</h2>
 
-        {list.length === 0 && <p>No data found</p>}
+        <input
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          style={input}
+        />
 
-        {list.map((r) => (
-          <div key={r._id} style={cardStyle}>
-            <h3 style={{ marginBottom: "6px" }}>{r.bookId?.title}</h3>
+        <input
+          placeholder="Author"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+          style={input}
+        />
 
-            <p style={{ margin: 0, color: "#666" }}>User: {r.userId}</p>
+        {/* CATEGORY DROPDOWN */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={input}
+        >
+          <option value="">Select Category</option>
+          <option value="Programming">Programming</option>
+          <option value="AI">AI</option>
+          <option value="Database">Database</option>
+          <option value="Networking">Networking</option>
+          <option value="Math">Math</option>
+        </select>
 
-            <p style={{ marginTop: "6px" }}>
-              Status: <b>{r.status}</b>
-            </p>
+        {/* IMAGE */}
+        <input
+          placeholder="Image URL"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
+          style={input}
+        />
 
-            {tab === "pending" && (
-              <button
-                style={buttonStyle("#2563eb")}
-                onClick={() => action(r._id, "issue")}
-              >
-                Approve Borrow
-              </button>
-            )}
+        <input
+          type="number"
+          placeholder="Copies"
+          value={copies}
+          onChange={(e) => setCopies(Number(e.target.value))}
+          style={input}
+        />
 
-            {tab === "issued" && (
-              <button
-                style={buttonStyle("#16a34a")}
-                onClick={() => action(r._id, "return")}
-              >
-                Mark Returned
-              </button>
-            )}
+        <button style={btnGreen}>Add Book</button>
+      </form>
+
+      {/* BOOK LIST */}
+      <h2>Books</h2>
+
+      <div style={grid}>
+        {books.map((b) => (
+          <div key={b._id} style={card}>
+            <img
+              src={b.image || "https://placehold.co/400x300"}
+              style={{ width: "100%", height: 180, objectFit: "cover" }}
+            />
+
+            <h3>{b.title}</h3>
+            <p>{b.author}</p>
+            <p>{b.category}</p>
+
+            <button onClick={() => deleteBook(b._id)} style={btnRed}>
+              Delete
+            </button>
           </div>
         ))}
       </div>
+
+      {/* REQUESTS */}
+      <h2>Borrow Requests</h2>
+      {pendingRequests.map((r) => (
+        <div key={r._id} style={card}>
+          <p>{r.bookId?.title}</p>
+          <button onClick={() => approveBorrow(r._id)} style={btnBlue}>
+            Approve
+          </button>
+        </div>
+      ))}
+
+      <h2>Return Requests</h2>
+      {returnRequests.map((r) => (
+        <div key={r._id} style={card}>
+          <p>{r.bookId?.title}</p>
+          <button onClick={() => approveReturn(r._id)} style={btnGreen}>
+            Mark Returned
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
+
+// STYLES
+const center = {
+  display: "flex",
+  height: "100vh",
+  justifyContent: "center",
+  alignItems: "center",
+};
+
+const topBar = {
+  display: "flex",
+  justifyContent: "space-between",
+  marginBottom: 20,
+};
+
+const card = {
+  padding: 15,
+  border: "1px solid #ddd",
+  borderRadius: 10,
+  marginBottom: 10,
+};
+
+const grid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
+  gap: 10,
+};
+
+const input = {
+  display: "block",
+  width: "100%",
+  marginBottom: 10,
+  padding: 10,
+};
+
+const btnBlue = {
+  background: "blue",
+  color: "white",
+  padding: 10,
+  border: "none",
+};
+
+const btnGreen = {
+  background: "green",
+  color: "white",
+  padding: 10,
+  border: "none",
+};
+
+const btnRed = {
+  background: "red",
+  color: "white",
+  padding: 10,
+  border: "none",
+};

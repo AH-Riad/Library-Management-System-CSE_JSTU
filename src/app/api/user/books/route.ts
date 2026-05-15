@@ -1,37 +1,30 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { connectDB } from "@/lib/mongodb";
-
-// ✅ IMPORTANT: FORCE MODEL REGISTRATION
-import "@/models/Book";
 import UserBook from "@/models/UserBook";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await connectDB();
 
-    const { userId } = await auth();
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
 
     if (!userId) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
+        { success: false, message: "Missing userId" },
+        { status: 400 },
       );
     }
 
-    const records = await UserBook.find({
-      userId,
-    }).populate("bookId"); // now Book schema exists
+    const records = await UserBook.find({ userId }).populate("bookId");
 
     return NextResponse.json({
       success: true,
       records,
     });
-  } catch (error) {
-    console.log("USER BOOKS ERROR:", error);
-
+  } catch (err) {
     return NextResponse.json(
-      { success: false, message: "Failed to fetch books" },
+      { success: false, message: "Server error" },
       { status: 500 },
     );
   }
