@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/mongodb";
 export async function POST(req: Request) {
   try {
     await connectDB();
+
     const body = await req.json();
     const { requestId } = body;
 
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
 
     // 1. Find request
     const request = await UserBook.findById(requestId);
+
     if (!request) {
       return NextResponse.json(
         { success: false, message: "Request not found" },
@@ -32,8 +34,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Get book
-    const book = await Book.findById(request.bookId);
+    // 2. Normalize bookId (safe fix)
+    const bookId =
+      typeof request.bookId === "object" ? request.bookId._id : request.bookId;
+
+    const book = await Book.findById(bookId);
+
     if (!book) {
       return NextResponse.json(
         { success: false, message: "Book not found" },
@@ -48,20 +54,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Update request → issued
+    // 3. Issue dates
     const issueDate = new Date();
     const dueDate = new Date();
     dueDate.setDate(issueDate.getDate() + 7);
 
+    // 4. Update request
     request.status = "issued";
     request.issueDate = issueDate;
     request.dueDate = dueDate;
 
     await request.save();
 
-    // 4. Decrease book count
-    book.availableCopies -= 1;
+    // 5. Update book stock safely
+    book.availableCopies = Math.max(0, book.availableCopies - 1);
     await book.save();
+
+    // (optional debug log)
+    console.log("BOOK ISSUED:", {
+      requestId,
+      userId: request.userId,
+      bookId,
+    });
 
     return NextResponse.json({
       success: true,
@@ -69,6 +83,8 @@ export async function POST(req: Request) {
       request,
     });
   } catch (error) {
+    console.log("ADMIN APPROVE ERROR:", error);
+
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 },
