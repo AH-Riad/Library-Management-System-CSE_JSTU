@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import Book from "@/models/Book";
-import UserBook from "@/models/UserBook";
 import { connectDB } from "@/lib/mongodb";
+import UserBook from "@/models/UserBook";
+import Book from "@/models/Book";
+import { auth } from "@clerk/nextjs/server";
 
 export async function POST(req: Request) {
   try {
     await connectDB();
 
     const { userId } = await auth();
-    const body = await req.json();
+    const { bookId } = await req.json();
 
     if (!userId) {
       return NextResponse.json(
@@ -18,8 +18,6 @@ export async function POST(req: Request) {
       );
     }
 
-    const { bookId } = body;
-
     if (!bookId) {
       return NextResponse.json(
         { success: false, message: "Book ID required" },
@@ -27,8 +25,23 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Check if book exists
+    // 🔥 FIX 1: BLOCK DUPLICATES (VERY IMPORTANT)
+    const existing = await UserBook.findOne({
+      userId,
+      bookId,
+      status: { $in: ["pending", "issued"] },
+    });
+
+    if (existing) {
+      return NextResponse.json({
+        success: false,
+        message: "You already requested or have this book",
+      });
+    }
+
+    // 🔥 FIX 2: CHECK BOOK
     const book = await Book.findById(bookId);
+
     if (!book) {
       return NextResponse.json(
         { success: false, message: "Book not found" },
@@ -36,57 +49,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Prevent duplicate request
-    const existingRequest = await UserBook.findOne({
-      userId,
-      bookId,
-      status: { $in: ["pending", "issued"] },
-    });
-
-    if (existingRequest) {
-      return NextResponse.json(
-        { success: false, message: "You already requested this book" },
-        { status: 400 },
-      );
-    }
-
-    // 3. Check limit (max 3 active books)
-    const activeBooksCount = await UserBook.countDocuments({
-      userId,
-      status: { $in: ["pending", "issued"] },
-    });
-
-    if (activeBooksCount >= 3) {
-      return NextResponse.json(
-        { success: false, message: "Book limit reached (max 3 books)" },
-        { status: 400 },
-      );
-    }
-
-    // 4. FIXED: dates (IMPORTANT)
-    const issueDate = new Date();
-    const dueDate = new Date();
-    dueDate.setDate(issueDate.getDate() + 7); // 7 days rule
-
-    // 5. Create request
-    const request = await UserBook.create({
+    // 🔥 FIX 3: CREATE ONLY ONE RECORD
+    const record = await UserBook.create({
       userId,
       bookId,
       status: "pending",
-      issueDate,
-      dueDate, // 🔥 FIXED (this was missing before)
+      issueDate: new Date(),
     });
 
     return NextResponse.json({
       success: true,
-      message: "Book request sent to admin",
-      request,
+      message: "Request created",
+      record,
     });
   } catch (error) {
-    console.log("BORROW ERROR:", error);
+    console.log(error);
 
     return NextResponse.json(
-      { success: false, message: "Server error", error: String(error) },
+      { success: false, message: "Server error" },
       { status: 500 },
     );
   }

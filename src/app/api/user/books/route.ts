@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { connectDB } from "@/lib/mongodb";
+
+// ✅ IMPORTANT: FORCE MODEL REGISTRATION
+import "@/models/Book";
 import UserBook from "@/models/UserBook";
-import "@/lib/mongodb";
 
 export async function GET() {
   try {
+    await connectDB();
+
     const { userId } = await auth();
 
     if (!userId) {
@@ -14,7 +19,9 @@ export async function GET() {
       );
     }
 
-    const records = await UserBook.find({ userId }).populate("bookId");
+    const records = await UserBook.find({
+      userId,
+    }).populate("bookId"); // now Book schema exists
 
     return NextResponse.json({
       success: true,
@@ -24,7 +31,7 @@ export async function GET() {
     console.log("USER BOOKS ERROR:", error);
 
     return NextResponse.json(
-      { success: false, message: "Failed to fetch user books" },
+      { success: false, message: "Failed to fetch books" },
       { status: 500 },
     );
   }

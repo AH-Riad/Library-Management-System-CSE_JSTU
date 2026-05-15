@@ -3,35 +3,40 @@
 import { useEffect, useState } from "react";
 
 export default function AdminPage() {
-  const [requests, setRequests] = useState<any[]>([]);
+  const [pending, setPending] = useState<any[]>([]);
+  const [issued, setIssued] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchRequests();
+    fetchData();
   }, []);
 
-  const fetchRequests = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
 
-      // ✅ FIXED ENDPOINT
-      const res = await fetch("/api/admin/requests/pending");
-      const data = await res.json();
+      const [pendingRes, issuedRes] = await Promise.all([
+        fetch("/api/admin/requests/pending"),
+        fetch("/api/admin/requests/return"),
+      ]);
 
-      console.log("ADMIN RESPONSE:", data);
+      const pendingData = await pendingRes.json();
+      const issuedData = await issuedRes.json();
 
-      setRequests(data.requests || []);
-    } catch (error) {
-      console.log("FETCH ERROR:", error);
-      setRequests([]);
+      setPending(pendingData.requests || []);
+      setIssued(issuedData.requests || []);
+    } catch (err) {
+      console.log(err);
+      setPending([]);
+      setIssued([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const approveRequest = async (requestId: string) => {
+  const approveBorrow = async (requestId: string) => {
     try {
-      const res = await fetch("/api/admin/approve", {
+      await fetch("/api/admin/approve", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,31 +44,42 @@ export default function AdminPage() {
         body: JSON.stringify({ requestId }),
       });
 
-      const data = await res.json();
+      fetchData();
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
-      alert(data.message || "Updated");
+  const markReturned = async (requestId: string) => {
+    try {
+      await fetch("/api/admin/requests/approve-return", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requestId }),
+      });
 
-      // refresh list after approval
-      fetchRequests();
-    } catch (error) {
-      alert("Something went wrong");
-      console.log(error);
+      fetchData();
+    } catch (err) {
+      console.log(err);
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>🛠 Admin Dashboard</h1>
-
-      <h2>📌 Pending Requests</h2>
 
       {loading && <p>Loading...</p>}
 
-      {!loading && requests.length === 0 && <p>No requests found</p>}
+      {/* PENDING */}
+      <h2>📌 Pending Requests</h2>
 
-      {requests.map((req) => (
+      {pending.length === 0 && <p>No pending requests</p>}
+
+      {pending.map((item) => (
         <div
-          key={req._id}
+          key={item._id}
           style={{
             border: "1px solid #ccc",
             padding: "10px",
@@ -71,30 +87,56 @@ export default function AdminPage() {
           }}
         >
           <p>
-            <b>Book:</b> {req.bookId?.title}
+            <b>Book:</b> {item.bookId?.title}
           </p>
-
           <p>
-            <b>Author:</b> {req.bookId?.author}
+            <b>Author:</b> {item.bookId?.author}
           </p>
-
           <p>
-            <b>User ID:</b> {req.userId}
+            <b>User:</b> {item.userId}
           </p>
-
           <p>
-            <b>Status:</b> {req.status}
+            <b>Status:</b> {item.status}
           </p>
 
-          <button
-            onClick={() => approveRequest(req._id)}
-            style={{
-              padding: "5px 10px",
-              cursor: "pointer",
-            }}
-          >
-            Approve
+          <button onClick={() => approveBorrow(item._id)}>
+            Approve Borrow
           </button>
+        </div>
+      ))}
+
+      {/* ISSUED */}
+      <h2 style={{ marginTop: "30px" }}>📚 Issued Books</h2>
+
+      {issued.length === 0 && <p>No issued books</p>}
+
+      {issued.map((item) => (
+        <div
+          key={item._id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          <p>
+            <b>Book:</b> {item.bookId?.title}
+          </p>
+          <p>
+            <b>Author:</b> {item.bookId?.author}
+          </p>
+          <p>
+            <b>User:</b> {item.userId}
+          </p>
+          <p>
+            <b>Status:</b> {item.status}
+          </p>
+
+          {item.status === "issued" && (
+            <button onClick={() => markReturned(item._id)}>
+              Mark Returned
+            </button>
+          )}
         </div>
       ))}
     </div>

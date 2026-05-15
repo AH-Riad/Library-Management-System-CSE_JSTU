@@ -1,90 +1,73 @@
 import { NextResponse } from "next/server";
+import { connectDB } from "@/lib/mongodb";
 import UserBook from "@/models/UserBook";
 import Book from "@/models/Book";
-import { connectDB } from "@/lib/mongodb";
 
 export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const body = await req.json();
-    const { requestId } = body;
+    const { requestId, action } = await req.json();
+    const record = await UserBook.findById(requestId);
 
-    if (!requestId) {
+    if (!record) {
       return NextResponse.json(
-        { success: false, message: "Request ID required" },
-        { status: 400 },
-      );
-    }
-
-    // 1. Find request
-    const request = await UserBook.findById(requestId);
-
-    if (!request) {
-      return NextResponse.json(
-        { success: false, message: "Request not found" },
+        { success: false, message: "Not found" },
         { status: 404 },
       );
     }
 
-    if (request.status !== "pending") {
-      return NextResponse.json(
-        { success: false, message: "Request already processed" },
-        { status: 400 },
-      );
+    const book = await Book.findById(record.bookId);
+
+    // =========================
+    // ACTION 1: ISSUE BOOK
+    // =========================
+    if (action === "issue") {
+      record.status = "issued";
+      record.issueDate = new Date();
+
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 7);
+      record.dueDate = dueDate;
+
+      if (book) {
+        book.availableCopies -= 1;
+        await book.save();
+      }
+
+      await record.save();
+
+      return NextResponse.json({
+        success: true,
+        message: "Book issued successfully",
+      });
     }
 
-    // 2. Normalize bookId (safe fix)
-    const bookId =
-      typeof request.bookId === "object" ? request.bookId._id : request.bookId;
+    // =========================
+    // ACTION 2: RETURN BOOK (NEW)
+    // =========================
+    if (action === "return") {
+      record.status = "returned";
+      record.returnDate = new Date();
 
-    const book = await Book.findById(bookId);
+      if (book) {
+        book.availableCopies += 1;
+        await book.save();
+      }
 
-    if (!book) {
-      return NextResponse.json(
-        { success: false, message: "Book not found" },
-        { status: 404 },
-      );
+      await record.save();
+
+      return NextResponse.json({
+        success: true,
+        message: "Book returned successfully",
+      });
     }
 
-    if (book.availableCopies <= 0) {
-      return NextResponse.json(
-        { success: false, message: "No copies available" },
-        { status: 400 },
-      );
-    }
-
-    // 3. Issue dates
-    const issueDate = new Date();
-    const dueDate = new Date();
-    dueDate.setDate(issueDate.getDate() + 7);
-
-    // 4. Update request
-    request.status = "issued";
-    request.issueDate = issueDate;
-    request.dueDate = dueDate;
-
-    await request.save();
-
-    // 5. Update book stock safely
-    book.availableCopies = Math.max(0, book.availableCopies - 1);
-    await book.save();
-
-    // (optional debug log)
-    console.log("BOOK ISSUED:", {
-      requestId,
-      userId: request.userId,
-      bookId,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: "Book approved and issued",
-      request,
-    });
+    return NextResponse.json(
+      { success: false, message: "Invalid action" },
+      { status: 400 },
+    );
   } catch (error) {
-    console.log("ADMIN APPROVE ERROR:", error);
-
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 },

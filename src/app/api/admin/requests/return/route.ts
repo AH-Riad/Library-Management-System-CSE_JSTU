@@ -8,7 +8,7 @@ export async function GET() {
     await connectDB();
 
     const requests = await UserBook.find({
-      status: "pending",
+      status: "issued",
     }).populate("bookId");
 
     return NextResponse.json({
@@ -17,7 +17,7 @@ export async function GET() {
     });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Failed to fetch pending requests" },
+      { success: false, message: "Failed to fetch issued books" },
       { status: 500 },
     );
   }
