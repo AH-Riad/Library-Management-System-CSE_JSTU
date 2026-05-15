@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import Book from "@/models/Book";
-import "@/lib/mongodb";
-
+import { connectDB } from "@/lib/mongodb";
 export async function GET() {
   try {
+    await connectDB();
     const books = await Book.find();
     return NextResponse.json({ success: true, books });
   } catch (error) {

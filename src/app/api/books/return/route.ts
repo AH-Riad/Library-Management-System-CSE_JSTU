@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import UserBook from "@/models/UserBook";
 import Book from "@/models/Book";
-import "@/lib/mongodb";
+import { connectDB } from "@/lib/mongodb";
 
 export async function POST(req: Request) {
   try {
+    await connectDB();
     const body = await req.json();
     const { requestId } = body;
 

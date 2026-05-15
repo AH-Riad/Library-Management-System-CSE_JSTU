@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import UserBook from "@/models/UserBook";
-import "@/lib/mongodb";
+import { connectDB } from "@/lib/mongodb";
 
 export async function GET() {
   try {
+    await connectDB();
     const requests = await UserBook.find({ status: "pending" }).populate(
       "bookId",
     );

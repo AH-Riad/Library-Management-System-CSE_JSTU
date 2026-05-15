@@ -2,11 +2,12 @@ import cron from "node-cron";
 import UserBook from "@/models/UserBook";
 import Book from "@/models/Book";
 import { sendEmail } from "./email";
-import "@/lib/mongodb";
+import { connectDB } from "@/lib/mongodb";
 
 export const startReminderJob = () => {
   cron.schedule("0 9 * * *", async () => {
     try {
+      await connectDB();
       console.log("Running 5th-day reminder job...");
 
       const issuedBooks = await UserBook.find({

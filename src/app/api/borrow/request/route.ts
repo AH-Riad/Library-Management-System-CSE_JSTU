@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import Book from "@/models/Book";
 import UserBook from "@/models/UserBook";
-import "@/lib/mongodb";
-
+import { connectDB } from "@/lib/mongodb";
 export async function POST(req: Request) {
   try {
+    await connectDB();
     const { userId } = await auth();
     const body = await req.json();
 
