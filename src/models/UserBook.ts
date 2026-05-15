@@ -15,12 +15,12 @@ const UserBookSchema = new mongoose.Schema(
 
     issueDate: {
       type: Date,
-      default: Date.now,
+      default: null,
     },
 
     dueDate: {
       type: Date,
-      required: true,
+      default: null,
     },
 
     returnDate: {
@@ -28,10 +28,11 @@ const UserBookSchema = new mongoose.Schema(
       default: null,
     },
 
+    // ✅ CLEAN STATUS SYSTEM
     status: {
       type: String,
-      enum: ["pending", "issued", "return_requested", "returned", "overdue"],
-      default: "pending",
+      enum: ["borrow_pending", "issued", "return_pending", "returned"],
+      default: "borrow_pending",
     },
 
     fine: {

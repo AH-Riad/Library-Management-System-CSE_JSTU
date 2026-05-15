@@ -13,71 +13,98 @@ export default function ProfilePage() {
   const fetchBooks = async () => {
     try {
       setLoading(true);
-
       const res = await fetch("/api/user/books");
       const data = await res.json();
-
       setRecords(data.records || []);
     } catch (err) {
       console.log(err);
-      setRecords([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const requestReturn = async (requestId: string) => {
+    try {
+      const res = await fetch("/api/return/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requestId }),
+      });
+
+      const data = await res.json();
+
+      alert(data.message || "Request sent");
+
+      fetchBooks();
+    } catch (err) {
+      console.log(err);
+      alert("Something went wrong");
+    }
+  };
+
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div style={{ padding: "20px" }}>
       <h1>📚 My Books</h1>
 
       {loading && <p>Loading...</p>}
 
       {!loading && records.length === 0 && <p>No books found</p>}
 
-      {records.map((item) => (
+      {records.map((record) => (
         <div
-          key={item._id}
+          key={record._id}
           style={{
-            border: "1px solid #ccc",
-            padding: "10px",
+            border: "1px solid #ddd",
+            padding: "12px",
             marginBottom: "10px",
+            borderRadius: "8px",
           }}
         >
           <p>
-            <b>Book:</b> {item.bookId?.title}
+            <b>Book:</b> {record.bookId?.title}
           </p>
           <p>
-            <b>Author:</b> {item.bookId?.author}
+            <b>Author:</b> {record.bookId?.author}
           </p>
-
           <p>
-            <b>Status:</b> {item.status}
+            <b>Status:</b> {record.status}
           </p>
 
-          {item.issueDate && (
+          {record.dueDate && (
             <p>
-              <b>Issued:</b> {new Date(item.issueDate).toLocaleDateString()}
+              <b>Due Date:</b> {new Date(record.dueDate).toLocaleDateString()}
             </p>
           )}
 
-          {item.dueDate && (
-            <p>
-              <b>Due Date:</b> {new Date(item.dueDate).toLocaleDateString()}
-            </p>
+          {/* ✅ ONLY SHOW BUTTON FOR ISSUED */}
+          {record.status === "issued" && (
+            <button
+              onClick={() => requestReturn(record._id)}
+              style={{
+                padding: "6px 12px",
+                marginTop: "8px",
+                cursor: "pointer",
+                background: "#2563eb",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+              }}
+            >
+              Request Return
+            </button>
           )}
 
-          {item.status === "returned" && (
-            <p style={{ color: "green" }}>✅ Book returned successfully</p>
-          )}
-
-          {item.status === "issued" && (
+          {/* STATUS HELP TEXT */}
+          {record.status === "return_pending" && (
             <p style={{ color: "orange" }}>
-              📌 Book is currently issued (return via admin)
+              ⏳ Return request pending admin approval
             </p>
           )}
 
-          {item.status === "pending" && (
-            <p style={{ color: "blue" }}>⏳ Waiting for admin approval</p>
+          {record.status === "returned" && (
+            <p style={{ color: "green" }}>✅ Book returned successfully</p>
           )}
         </div>
       ))}

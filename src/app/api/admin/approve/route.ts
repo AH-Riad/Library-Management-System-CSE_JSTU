@@ -7,7 +7,8 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const { requestId, action } = await req.json();
+    const { requestId } = await req.json();
+
     const record = await UserBook.findById(requestId);
 
     if (!record) {
@@ -17,57 +18,33 @@ export async function POST(req: Request) {
       );
     }
 
+    if (record.status !== "borrow_pending") {
+      return NextResponse.json(
+        { success: false, message: "Invalid status" },
+        { status: 400 },
+      );
+    }
+
+    record.status = "issued";
+    record.issueDate = new Date();
+
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 7);
+    record.dueDate = dueDate;
+
+    await record.save();
+
     const book = await Book.findById(record.bookId);
-
-    // =========================
-    // ACTION 1: ISSUE BOOK
-    // =========================
-    if (action === "issue") {
-      record.status = "issued";
-      record.issueDate = new Date();
-
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 7);
-      record.dueDate = dueDate;
-
-      if (book) {
-        book.availableCopies -= 1;
-        await book.save();
-      }
-
-      await record.save();
-
-      return NextResponse.json({
-        success: true,
-        message: "Book issued successfully",
-      });
+    if (book) {
+      book.availableCopies -= 1;
+      await book.save();
     }
 
-    // =========================
-    // ACTION 2: RETURN BOOK (NEW)
-    // =========================
-    if (action === "return") {
-      record.status = "returned";
-      record.returnDate = new Date();
-
-      if (book) {
-        book.availableCopies += 1;
-        await book.save();
-      }
-
-      await record.save();
-
-      return NextResponse.json({
-        success: true,
-        message: "Book returned successfully",
-      });
-    }
-
-    return NextResponse.json(
-      { success: false, message: "Invalid action" },
-      { status: 400 },
-    );
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      message: "Book issued successfully",
+    });
+  } catch (err) {
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 },
