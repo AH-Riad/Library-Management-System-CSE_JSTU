@@ -3,9 +3,11 @@ import { auth } from "@clerk/nextjs/server";
 import Book from "@/models/Book";
 import UserBook from "@/models/UserBook";
 import { connectDB } from "@/lib/mongodb";
+
 export async function POST(req: Request) {
   try {
     await connectDB();
+
     const { userId } = await auth();
     const body = await req.json();
 
@@ -34,7 +36,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Prevent duplicate request for same book (your rule B)
+    // 2. Prevent duplicate request
     const existingRequest = await UserBook.findOne({
       userId,
       bookId,
@@ -48,7 +50,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Check active books limit (pending + issued)
+    // 3. Check limit (max 3 active books)
     const activeBooksCount = await UserBook.countDocuments({
       userId,
       status: { $in: ["pending", "issued"] },
@@ -61,12 +63,18 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Create request
+    // 4. FIXED: dates (IMPORTANT)
+    const issueDate = new Date();
+    const dueDate = new Date();
+    dueDate.setDate(issueDate.getDate() + 7); // 7 days rule
+
+    // 5. Create request
     const request = await UserBook.create({
       userId,
       bookId,
       status: "pending",
-      issueDate: new Date(),
+      issueDate,
+      dueDate, // 🔥 FIXED (this was missing before)
     });
 
     return NextResponse.json({
@@ -75,8 +83,10 @@ export async function POST(req: Request) {
       request,
     });
   } catch (error) {
+    console.log("BORROW ERROR:", error);
+
     return NextResponse.json(
-      { success: false, message: "Server error" },
+      { success: false, message: "Server error", error: String(error) },
       { status: 500 },
     );
   }
