@@ -4,31 +4,51 @@ import { useEffect, useState } from "react";
 
 export default function AdminPage() {
   const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchRequests();
   }, []);
 
   const fetchRequests = async () => {
-    const res = await fetch("/api/admin/requests");
-    const data = await res.json();
+    try {
+      setLoading(true);
 
-    if (data.success) {
-      setRequests(data.requests);
+      // ✅ FIXED ENDPOINT
+      const res = await fetch("/api/admin/requests/pending");
+      const data = await res.json();
+
+      console.log("ADMIN RESPONSE:", data);
+
+      setRequests(data.requests || []);
+    } catch (error) {
+      console.log("FETCH ERROR:", error);
+      setRequests([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const approveRequest = async (requestId: string) => {
-    const res = await fetch("/api/admin/approve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId }),
-    });
+    try {
+      const res = await fetch("/api/admin/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ requestId }),
+      });
 
-    const data = await res.json();
-    alert(data.message);
+      const data = await res.json();
 
-    fetchRequests(); // refresh list
+      alert(data.message || "Updated");
+
+      // refresh list after approval
+      fetchRequests();
+    } catch (error) {
+      alert("Something went wrong");
+      console.log(error);
+    }
   };
 
   return (
@@ -37,7 +57,9 @@ export default function AdminPage() {
 
       <h2>📌 Pending Requests</h2>
 
-      {requests.length === 0 && <p>No requests found</p>}
+      {loading && <p>Loading...</p>}
+
+      {!loading && requests.length === 0 && <p>No requests found</p>}
 
       {requests.map((req) => (
         <div
@@ -51,14 +73,28 @@ export default function AdminPage() {
           <p>
             <b>Book:</b> {req.bookId?.title}
           </p>
+
           <p>
-            <b>User:</b> {req.userId}
+            <b>Author:</b> {req.bookId?.author}
           </p>
+
+          <p>
+            <b>User ID:</b> {req.userId}
+          </p>
+
           <p>
             <b>Status:</b> {req.status}
           </p>
 
-          <button onClick={() => approveRequest(req._id)}>Approve</button>
+          <button
+            onClick={() => approveRequest(req._id)}
+            style={{
+              padding: "5px 10px",
+              cursor: "pointer",
+            }}
+          >
+            Approve
+          </button>
         </div>
       ))}
     </div>
