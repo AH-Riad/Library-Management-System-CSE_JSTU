@@ -30,8 +30,8 @@ const UserBookSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["issued", "returned", "overdue"],
-      default: "issued",
+      enum: ["pending", "issued", "returned", "overdue"],
+      default: "pending",
     },
 
     fine: {
