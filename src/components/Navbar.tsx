@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/nextjs";
@@ -31,15 +32,25 @@ export default function Navbar() {
 
   return (
     <nav style={styles.nav}>
-      {/* LEFT */}
-      <div style={styles.left}>
-        <div style={styles.logo}>CSE</div>
+      {/* LEFT (CLICKABLE → HOME) */}
+      <Link href="/" style={styles.left}>
+        {/* LOGO */}
+        <div style={styles.logoWrapper}>
+          <Image
+            src="/logo.webp"
+            alt="University Logo"
+            width={52}
+            height={52}
+            priority
+            style={styles.logoImage}
+          />
+        </div>
 
         <div>
           <h2 style={styles.title}>CSE Library</h2>
           <p style={styles.subtitle}>Digital Library System</p>
         </div>
-      </div>
+      </Link>
 
       {/* SEARCH */}
       <form onSubmit={handleSearch} style={styles.searchBox}>
@@ -83,7 +94,7 @@ export default function Navbar() {
   );
 }
 
-/* FIXED TYPESCRIPT SAFE STYLES */
+/* STYLES */
 const styles: Record<string, React.CSSProperties> = {
   nav: {
     display: "flex",
@@ -98,22 +109,29 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: "1px solid rgba(255,255,255,0.08)",
   },
 
+  /* 🔥 NOW CLICKABLE */
   left: {
     display: "flex",
     alignItems: "center",
     gap: "14px",
     minWidth: "230px",
+    textDecoration: "none",
+    color: "white",
   },
 
-  logo: {
-    width: "46px",
-    height: "46px",
+  logoWrapper: {
+    width: "52px",
+    height: "52px",
     borderRadius: "12px",
-    background: "linear-gradient(135deg,#2563eb,#06b6d4)",
+    overflow: "hidden",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontWeight: "bold",
+    background: "white",
+  },
+
+  logoImage: {
+    objectFit: "contain",
   },
 
   title: {

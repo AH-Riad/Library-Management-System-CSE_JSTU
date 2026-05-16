@@ -29,9 +29,52 @@ export default function RootLayout({
       <html lang="en">
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          style={{
+            margin: 0,
+            padding: 0,
+            minHeight: "100vh",
+            position: "relative",
+            overflowX: "hidden",
+          }}
         >
-          <Toaster position="top-center" /> <Navbar />
-          {children}
+          {/* 🔥 BACKGROUND LOGO WATERMARK */}
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              pointerEvents: "none",
+              zIndex: 0,
+            }}
+          >
+            <img
+              src="/logo.webp"
+              alt="background logo"
+              style={{
+                width: "520px",
+                height: "auto",
+                objectFit: "contain",
+
+                /* 🔥 MORE VISIBLE */
+                opacity: 0.22,
+
+                /* keep clarity */
+                filter: "contrast(1.15) saturate(1.1) brightness(1)",
+
+                /* slight professional feel */
+                transform: "scale(1.05)",
+              }}
+            />
+          </div>
+
+          {/* PAGE CONTENT */}
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <Toaster position="top-center" />
+            <Navbar />
+            {children}
+          </div>
         </body>
       </html>
     </ClerkProvider>
