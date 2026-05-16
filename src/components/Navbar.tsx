@@ -1,19 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/nextjs";
 
 export default function Navbar() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [query, setQuery] = useState("");
 
+  // keep input synced with url
+  useEffect(() => {
+    const q = searchParams.get("search");
+
+    if (q) {
+      setQuery(q);
+    }
+  }, [searchParams]);
+
+  // SEARCH FUNCTION
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!query.trim()) return;
+    if (!query.trim()) {
+      router.push("/");
+      return;
+    }
 
-    alert(`Searching for: ${query}`);
+    router.push(`/?search=${encodeURIComponent(query)}`);
   };
 
   return (
@@ -22,13 +39,14 @@ export default function Navbar() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "14px 24px",
+        padding: "14px 28px",
         background: "#0f172a",
         color: "white",
         position: "sticky",
         top: 0,
         zIndex: 100,
-        boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        backdropFilter: "blur(10px)",
       }}
     >
       {/* LEFT */}
@@ -36,32 +54,53 @@ export default function Navbar() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "12px",
-          minWidth: "220px",
+          gap: "14px",
+          minWidth: "230px",
         }}
       >
-        {/* LOGO PLACEHOLDER */}
+        {/* LOGO */}
         <div
           style={{
-            width: "42px",
-            height: "42px",
-            borderRadius: "10px",
-            background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-          }}
-        />
-
-        <h2
-          style={{
-            margin: 0,
-            fontSize: "22px",
+            width: "46px",
+            height: "46px",
+            borderRadius: "12px",
+            background: "linear-gradient(135deg,#2563eb,#06b6d4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             fontWeight: "bold",
+            fontSize: "14px",
+            boxShadow: "0 4px 14px rgba(37,99,235,0.35)",
           }}
         >
-          CSE Library
-        </h2>
+          CSE
+        </div>
+
+        <div>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: "22px",
+              fontWeight: "700",
+              letterSpacing: "0.5px",
+            }}
+          >
+            CSE Library
+          </h2>
+
+          <p
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              opacity: 0.7,
+            }}
+          >
+            Digital Library System
+          </p>
+        </div>
       </div>
 
-      {/* CENTER SEARCH */}
+      {/* SEARCH */}
       <form
         onSubmit={handleSearch}
         style={{
@@ -69,103 +108,72 @@ export default function Navbar() {
           alignItems: "center",
           gap: "10px",
           flex: 1,
-          maxWidth: "520px",
-          margin: "0 24px",
+          maxWidth: "580px",
+          margin: "0 28px",
         }}
       >
         <input
           type="text"
-          placeholder="Search books by name..."
+          placeholder="Search books by title..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           style={{
             flex: 1,
-            padding: "10px 14px",
-            borderRadius: "10px",
-            border: "none",
+            padding: "12px 16px",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.08)",
             outline: "none",
             fontSize: "15px",
+            background: "#1e293b",
+            color: "white",
           }}
         />
 
         <button
           type="submit"
           style={{
-            padding: "10px 18px",
-            borderRadius: "10px",
+            padding: "12px 18px",
+            borderRadius: "12px",
             border: "none",
-            background: "#3b82f6",
+            background: "linear-gradient(135deg,#2563eb,#3b82f6)",
             color: "white",
-            fontWeight: "bold",
+            fontWeight: "700",
             cursor: "pointer",
+            transition: "0.2s",
+            boxShadow: "0 4px 14px rgba(37,99,235,0.35)",
           }}
         >
           Search
         </button>
       </form>
 
-      {/* RIGHT NAV */}
+      {/* RIGHT */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "14px",
+          gap: "12px",
         }}
       >
-        <Link
-          href="/"
-          style={{
-            textDecoration: "none",
-            color: "white",
-            background: "#2563eb",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            fontWeight: "500",
-          }}
-        >
-          Home
-        </Link>
+        <NavButton href="/" label="Home" color="#2563eb" />
 
-        <Link
-          href="/profile"
-          style={{
-            textDecoration: "none",
-            color: "white",
-            background: "#7c3aed",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            fontWeight: "500",
-          }}
-        >
-          My Profile
-        </Link>
+        <NavButton href="/profile" label="My Profile" color="#7c3aed" />
 
-        <Link
-          href="/admin"
-          style={{
-            textDecoration: "none",
-            color: "white",
-            background: "#059669",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            fontWeight: "500",
-          }}
-        >
-          Admin
-        </Link>
+        <NavButton href="/admin" label="Admin" color="#059669" />
 
         {/* AUTH */}
         <SignedOut>
           <SignInButton mode="modal">
             <button
               style={{
-                padding: "8px 16px",
-                borderRadius: "8px",
+                padding: "10px 18px",
+                borderRadius: "10px",
                 border: "none",
-                background: "#f59e0b",
+                background: "linear-gradient(135deg,#f59e0b,#f97316)",
                 color: "white",
-                fontWeight: "bold",
+                fontWeight: "700",
                 cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(249,115,22,0.35)",
               }}
             >
               Sign In
@@ -174,9 +182,45 @@ export default function Navbar() {
         </SignedOut>
 
         <SignedIn>
-          <UserButton afterSignOutUrl="/" />
+          <div
+            style={{
+              marginLeft: "4px",
+            }}
+          >
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </SignedIn>
       </div>
     </nav>
+  );
+}
+
+// NAV BUTTON COMPONENT
+function NavButton({
+  href,
+  label,
+  color,
+}: {
+  href: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <Link
+      href={href}
+      style={{
+        textDecoration: "none",
+        color: "white",
+        background: color,
+        padding: "10px 16px",
+        borderRadius: "10px",
+        fontWeight: "600",
+        fontSize: "14px",
+        transition: "0.2s",
+        boxShadow: `0 4px 12px ${color}55`,
+      }}
+    >
+      {label}
+    </Link>
   );
 }

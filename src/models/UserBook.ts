@@ -13,20 +13,30 @@ const UserBookSchema = new mongoose.Schema(
       required: true,
     },
 
-    issueDate: Date,
-    dueDate: Date,
-    returnDate: Date,
+    issueDate: {
+      type: Date,
+      default: null,
+    },
+
+    dueDate: {
+      type: Date,
+      default: null,
+    },
+
+    returnDate: {
+      type: Date,
+      default: null,
+    },
 
     status: {
       type: String,
       enum: [
-        "borrow_pending",
-        "issued",
-        "return_pending",
-        "returned",
-        "overdue",
+        "pending", // borrow request
+        "issued", // approved borrow
+        "return_pending", // user requested return
+        "returned", // completed
       ],
-      default: "borrow_pending",
+      default: "pending",
     },
 
     fine: {
@@ -34,7 +44,9 @@ const UserBookSchema = new mongoose.Schema(
       default: 0,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
 export default mongoose.models.UserBook ||

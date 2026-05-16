@@ -5,27 +5,33 @@ const BookSchema = new mongoose.Schema(
     title: {
       type: String,
       required: true,
+      trim: true,
     },
 
     author: {
       type: String,
       required: true,
+      trim: true,
     },
 
     category: {
       type: String,
       required: true,
-    },
-
-    image: {
-      type: String,
-      default: "",
+      trim: true,
     },
 
     availableCopies: {
       type: Number,
-      required: true,
       default: 1,
+      min: 0,
+    },
+
+    // ✅ SAFE OPTIONAL FIELD (no crash, no index issues)
+    isbn: {
+      type: String,
+      default: null,
+      index: true,
+      sparse: true,
     },
   },
   {

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "12345";
+import toast from "react-hot-toast";
 
 export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
@@ -11,152 +9,152 @@ export default function AdminPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
-  const [returnRequests, setReturnRequests] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
+  const [pending, setPending] = useState<any[]>([]);
+  const [returns, setReturns] = useState<any[]>([]);
+
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [loading, setLoading] = useState(false);
 
-  // BOOK FORM STATES
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [category, setCategory] = useState("");
-  const [image, setImage] = useState("");
   const [copies, setCopies] = useState(1);
 
-  // LOGIN
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const auth = localStorage.getItem("admin_auth");
+      if (auth === "true") setAuthorized(true);
+    }
+  }, []);
+
+  const login = (e: any) => {
     e.preventDefault();
 
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      setAuthorized(true);
+    if (username === "admin" && password === "12345") {
       localStorage.setItem("admin_auth", "true");
+      setAuthorized(true);
+      toast.success("Login successful");
     } else {
-      alert("Invalid credentials");
+      toast.error("Wrong credentials");
     }
   };
 
-  // AUTH CHECK
-  useEffect(() => {
-    const auth = localStorage.getItem("admin_auth");
-    if (auth === "true") setAuthorized(true);
-  }, []);
-
-  // LOAD DATA
-  useEffect(() => {
-    if (!authorized) return;
-    fetchData();
-  }, [authorized]);
+  const logout = () => {
+    localStorage.removeItem("admin_auth");
+    setAuthorized(false);
+    toast.success("Logged out");
+  };
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      const [pendingRes, returnRes, booksRes] = await Promise.all([
+    try {
+      const [b, p, r] = await Promise.all([
+        fetch("/api/books"),
         fetch("/api/admin/requests/pending"),
         fetch("/api/admin/requests/return"),
-        fetch("/api/books"),
       ]);
 
-      const pendingData = await pendingRes.json();
-      const returnData = await returnRes.json();
-      const booksData = await booksRes.json();
+      const bd = await b.json();
+      const pd = await p.json();
+      const rd = await r.json();
 
-      setPendingRequests(pendingData.requests || []);
-      setReturnRequests(returnData.requests || []);
-      setBooks(booksData.books || []);
+      setBooks(bd?.books || []);
+      setPending(pd?.requests || []);
+      setReturns(rd?.requests || []);
     } catch (err) {
       console.log(err);
+      toast.error("Failed to load data");
     } finally {
       setLoading(false);
     }
   };
 
-  // ADD BOOK
-  const addBook = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (authorized) fetchData();
+  }, [authorized]);
+
+  const addBook = async (e: any) => {
     e.preventDefault();
+
+    if (!title || !author || !category) {
+      toast.error("Fill all fields");
+      return;
+    }
 
     try {
       const res = await fetch("/api/books", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          author,
-          category,
-          image,
-          availableCopies: copies,
+          title: title.trim(),
+          author: author.trim(),
+          category: category.trim(),
+          availableCopies: Number(copies) || 1,
         }),
       });
 
       const data = await res.json();
 
-      alert(data.message || "Book added");
+      if (!data.success) {
+        toast.error(data.message || "Failed to add book");
+        return;
+      }
 
-      // reset form
+      toast.success("Book added successfully");
+
       setTitle("");
       setAuthor("");
       setCategory("");
-      setImage("");
       setCopies(1);
 
       fetchData();
     } catch (err) {
       console.log(err);
+      toast.error("Server error");
     }
   };
 
-  // DELETE BOOK
-  const deleteBook = async (id: string) => {
-    if (!confirm("Delete this book?")) return;
-
+  const approve = async (requestId: string) => {
     try {
-      const res = await fetch(`/api/books/${id}`, {
-        method: "DELETE",
+      const res = await fetch("/api/admin/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId }),
       });
 
-      const data = await res.json();
+      if (!res.ok) throw new Error();
 
-      alert(data.message || "Deleted");
-
+      toast.success("Approved");
       fetchData();
-    } catch (err) {
-      console.log(err);
+    } catch {
+      toast.error("Failed to approve");
     }
   };
 
-  // BORROW APPROVE
-  const approveBorrow = async (id: string) => {
-    await fetch("/api/admin/approve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: id }),
-    });
+  const markReturned = async (requestId: string) => {
+    try {
+      const res = await fetch("/api/admin/return", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId }),
+      });
 
-    fetchData();
+      if (!res.ok) throw new Error();
+
+      toast.success("Marked returned");
+      fetchData();
+    } catch {
+      toast.error("Failed to update return");
+    }
   };
 
-  // RETURN APPROVE
-  const approveReturn = async (id: string) => {
-    await fetch("/api/admin/return", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId: id }),
-    });
-
-    fetchData();
-  };
-
-  const logout = () => {
-    localStorage.removeItem("admin_auth");
-    setAuthorized(false);
-  };
-
-  // LOGIN PAGE
   if (!authorized) {
     return (
-      <div style={center}>
-        <form onSubmit={handleLogin} style={card}>
-          <h1>Admin Login</h1>
+      <div style={loginWrapper}>
+        <form onSubmit={login} style={loginCard}>
+          <h2>Admin Login</h2>
 
           <input
             placeholder="Username"
@@ -173,169 +171,207 @@ export default function AdminPage() {
             style={input}
           />
 
-          <button style={btnBlue}>Login</button>
+          <button style={btn}>Login</button>
         </form>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <div style={topBar}>
-        <h1>Admin Dashboard</h1>
-        <button onClick={logout} style={btnRed}>
+    <div style={layout}>
+      <div style={sidebar}>
+        <h2>Admin Panel</h2>
+
+        {["dashboard", "books", "add", "requests"].map((tab) => (
+          <div
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={item(activeTab === tab)}
+          >
+            {tab.toUpperCase()}
+          </div>
+        ))}
+
+        <button onClick={logout} style={logoutBtn}>
           Logout
         </button>
       </div>
 
-      {/* ADD BOOK */}
-      <form onSubmit={addBook} style={card}>
-        <h2>Add Book</h2>
+      <div style={main}>
+        {loading && <p>Loading...</p>}
 
-        <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={input}
-        />
+        {activeTab === "dashboard" && (
+          <>
+            <h1>Dashboard</h1>
+            <p>Books: {books.length}</p>
+            <p>Pending: {pending.length}</p>
+            <p>Returns: {returns.length}</p>
+          </>
+        )}
 
-        <input
-          placeholder="Author"
-          value={author}
-          onChange={(e) => setAuthor(e.target.value)}
-          style={input}
-        />
+        {activeTab === "add" && (
+          <form onSubmit={addBook} style={card}>
+            <h2>Add Book</h2>
 
-        {/* CATEGORY DROPDOWN */}
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          style={input}
-        >
-          <option value="">Select Category</option>
-          <option value="Programming">Programming</option>
-          <option value="AI">AI</option>
-          <option value="Database">Database</option>
-          <option value="Networking">Networking</option>
-          <option value="Math">Math</option>
-        </select>
-
-        {/* IMAGE */}
-        <input
-          placeholder="Image URL"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          style={input}
-        />
-
-        <input
-          type="number"
-          placeholder="Copies"
-          value={copies}
-          onChange={(e) => setCopies(Number(e.target.value))}
-          style={input}
-        />
-
-        <button style={btnGreen}>Add Book</button>
-      </form>
-
-      {/* BOOK LIST */}
-      <h2>Books</h2>
-
-      <div style={grid}>
-        {books.map((b) => (
-          <div key={b._id} style={card}>
-            <img
-              src={b.image || "https://placehold.co/400x300"}
-              style={{ width: "100%", height: 180, objectFit: "cover" }}
+            <input
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={input}
             />
 
-            <h3>{b.title}</h3>
-            <p>{b.author}</p>
-            <p>{b.category}</p>
+            <input
+              placeholder="Author"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              style={input}
+            />
 
-            <button onClick={() => deleteBook(b._id)} style={btnRed}>
-              Delete
-            </button>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={input}
+            >
+              <option value="">Category</option>
+              <option>Programming</option>
+              <option>AI</option>
+              <option>Database</option>
+            </select>
+
+            <input
+              type="number"
+              value={copies}
+              onChange={(e) => setCopies(Number(e.target.value))}
+              style={input}
+            />
+
+            <button style={btn}>Add</button>
+          </form>
+        )}
+
+        {activeTab === "books" && (
+          <div>
+            <h2>Books</h2>
+
+            {Array.isArray(books) && books.length > 0 ? (
+              books.map((b) => (
+                <div key={b._id} style={bookCard}>
+                  <p>{b.title}</p>
+                </div>
+              ))
+            ) : (
+              <p>No books found</p>
+            )}
           </div>
-        ))}
+        )}
+
+        {activeTab === "requests" && (
+          <>
+            <h2>Pending Requests</h2>
+
+            {pending.map((r) => (
+              <div key={r._id} style={requestCard}>
+                <p>{r.bookId?.title}</p>
+                <button onClick={() => approve(r._id)} style={buttonGreen}>
+                  Approve
+                </button>
+              </div>
+            ))}
+
+            <h2>Return Requests</h2>
+
+            {returns.map((r) => (
+              <div key={r._id} style={requestCard}>
+                <p>{r.bookId?.title}</p>
+                <button onClick={() => markReturned(r._id)} style={buttonBlue}>
+                  Mark Returned
+                </button>
+              </div>
+            ))}
+          </>
+        )}
       </div>
-
-      {/* REQUESTS */}
-      <h2>Borrow Requests</h2>
-      {pendingRequests.map((r) => (
-        <div key={r._id} style={card}>
-          <p>{r.bookId?.title}</p>
-          <button onClick={() => approveBorrow(r._id)} style={btnBlue}>
-            Approve
-          </button>
-        </div>
-      ))}
-
-      <h2>Return Requests</h2>
-      {returnRequests.map((r) => (
-        <div key={r._id} style={card}>
-          <p>{r.bookId?.title}</p>
-          <button onClick={() => approveReturn(r._id)} style={btnGreen}>
-            Mark Returned
-          </button>
-        </div>
-      ))}
     </div>
   );
 }
 
-// STYLES
-const center = {
+/* STYLES (UNCHANGED) */
+const layout = { display: "flex", minHeight: "100vh" };
+
+const sidebar = {
+  width: 240,
+  background: "#0f172a",
+  color: "white",
+  padding: 20,
   display: "flex",
+  flexDirection: "column" as const,
+  gap: 10,
+};
+
+const item = (active: boolean) => ({
+  padding: 10,
+  cursor: "pointer",
+  background: active ? "#2563eb" : "transparent",
+  borderRadius: 8,
+});
+
+const main = { flex: 1, padding: 20 };
+
+const input = {
+  width: "100%",
+  padding: 10,
+  margin: "8px 0",
+};
+
+const btn = {
+  padding: 10,
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+};
+
+const buttonGreen = {
+  padding: 8,
+  background: "green",
+  color: "white",
+  marginRight: 10,
+};
+
+const buttonBlue = {
+  padding: 8,
+  background: "#2563eb",
+  color: "white",
+};
+
+const requestCard = {
+  border: "1px solid #ddd",
+  padding: 10,
+  marginTop: 10,
+};
+
+const bookCard = {
+  border: "1px solid #ddd",
+  padding: 10,
+  marginTop: 10,
+};
+
+const card = { maxWidth: 400 };
+
+const logoutBtn = {
+  marginTop: "auto",
+  background: "red",
+  color: "white",
+  padding: 10,
+};
+
+const loginWrapper = {
   height: "100vh",
+  display: "flex",
   justifyContent: "center",
   alignItems: "center",
 };
 
-const topBar = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: 20,
-};
-
-const card = {
-  padding: 15,
+const loginCard = {
+  padding: 20,
   border: "1px solid #ddd",
-  borderRadius: 10,
-  marginBottom: 10,
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))",
-  gap: 10,
-};
-
-const input = {
-  display: "block",
-  width: "100%",
-  marginBottom: 10,
-  padding: 10,
-};
-
-const btnBlue = {
-  background: "blue",
-  color: "white",
-  padding: 10,
-  border: "none",
-};
-
-const btnGreen = {
-  background: "green",
-  color: "white",
-  padding: 10,
-  border: "none",
-};
-
-const btnRed = {
-  background: "red",
-  color: "white",
-  padding: 10,
-  border: "none",
 };

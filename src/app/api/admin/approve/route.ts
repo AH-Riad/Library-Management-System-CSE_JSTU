@@ -12,29 +12,21 @@ export async function POST(req: Request) {
     const record = await UserBook.findById(requestId);
 
     if (!record) {
-      return NextResponse.json(
-        { success: false, message: "Not found" },
-        { status: 404 },
-      );
-    }
-
-    if (record.status !== "borrow_pending") {
-      return NextResponse.json(
-        { success: false, message: "Invalid status" },
-        { status: 400 },
-      );
+      return NextResponse.json({ success: false }, { status: 404 });
     }
 
     record.status = "issued";
     record.issueDate = new Date();
 
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + 7);
-    record.dueDate = dueDate;
+    const due = new Date();
+    due.setDate(due.getDate() + 7);
+
+    record.dueDate = due;
 
     await record.save();
 
     const book = await Book.findById(record.bookId);
+
     if (book) {
       book.availableCopies -= 1;
       await book.save();
@@ -42,12 +34,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Book issued successfully",
+      message: "Book issued",
     });
   } catch (err) {
-    return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }

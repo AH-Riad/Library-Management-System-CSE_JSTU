@@ -9,15 +9,22 @@ export async function GET() {
 
     const requests = await UserBook.find({
       status: "pending",
-    }).populate("bookId");
+    })
+      .populate("bookId")
+      .sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
       requests,
     });
   } catch (error) {
+    console.log(error);
+
     return NextResponse.json(
-      { success: false, message: "Failed to fetch pending requests" },
+      {
+        success: false,
+        requests: [],
+      },
       { status: 500 },
     );
   }

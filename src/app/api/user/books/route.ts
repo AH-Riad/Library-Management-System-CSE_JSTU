@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import UserBook from "@/models/UserBook";
+import "@/models/Book";
 
 export async function GET(req: Request) {
   try {
@@ -10,22 +11,26 @@ export async function GET(req: Request) {
     const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "Missing userId" },
-        { status: 400 },
-      );
+      return NextResponse.json({
+        success: false,
+        books: [],
+      });
     }
 
-    const records = await UserBook.find({ userId }).populate("bookId");
+    const books = await UserBook.find({ userId })
+      .populate("bookId") // 🔥 THIS FIXES YOUR ISSUE
+      .sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
-      records,
+      books,
     });
-  } catch (err) {
-    return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 },
-    );
+  } catch (error) {
+    console.log("USER BOOKS ERROR:", error);
+
+    return NextResponse.json({
+      success: false,
+      books: [],
+    });
   }
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import UserBook from "@/models/UserBook";
-import Book from "@/models/Book";
 
 export async function POST(req: Request) {
   try {
@@ -12,27 +11,23 @@ export async function POST(req: Request) {
     const record = await UserBook.findById(requestId);
 
     if (!record) {
-      return NextResponse.json({ success: false }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: "Not found" },
+        { status: 404 },
+      );
     }
 
-    record.status = "returned";
-    record.returnDate = new Date();
-    record.fine = record.fine || 0;
-
+    record.status = "return_pending";
     await record.save();
-
-    const book = await Book.findById(record.bookId);
-    if (book) {
-      book.availableCopies += 1;
-      await book.save();
-    }
 
     return NextResponse.json({
       success: true,
-      message: "Book returned successfully",
-      fine: record.fine,
+      message: "Return request sent",
     });
   } catch (err) {
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 },
+    );
   }
 }

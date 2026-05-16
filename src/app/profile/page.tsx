@@ -14,13 +14,13 @@ export default function ProfilePage() {
     try {
       setLoading(true);
 
-      // ⚠️ IMPORTANT: replace with your real userId from Clerk/session
       const userId = "user_373IwGkB4avKnerIOwo7klUrEK7";
 
       const res = await fetch(`/api/user/books?userId=${userId}`);
       const data = await res.json();
 
-      setRecords(data.records || []);
+      // ✅ FIX IS HERE
+      setRecords(data.books || []);
     } catch (err) {
       console.log(err);
     } finally {
@@ -83,7 +83,7 @@ export default function ProfilePage() {
             </p>
           )}
 
-          {/* ✅ ONLY SHOW BUTTON FOR ISSUED */}
+          {/* ONLY ISSUED */}
           {record.status === "issued" && (
             <button
               onClick={() => requestReturn(record._id)}
@@ -101,7 +101,6 @@ export default function ProfilePage() {
             </button>
           )}
 
-          {/* STATUS HELP TEXT */}
           {record.status === "return_pending" && (
             <p style={{ color: "orange" }}>
               ⏳ Return request pending admin approval
