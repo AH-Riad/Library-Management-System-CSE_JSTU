@@ -7,11 +7,11 @@ import {
   SignOutButton,
   useUser,
 } from "@clerk/nextjs";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 
-export default function HomePage() {
+function HomePageContent() {
   const { user } = useUser();
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -121,6 +121,7 @@ export default function HomePage() {
               <p style={{ margin: 0, fontSize: "14px" }}>
                 👋 {user?.firstName || "User"}
               </p>
+
               <SignOutButton>
                 <button
                   style={{
@@ -212,7 +213,9 @@ export default function HomePage() {
               <h3 style={{ marginBottom: "6px", color: "#111827" }}>
                 {book.title}
               </h3>
+
               <p style={{ margin: 0, color: "#4b5563" }}>👤 {book.author}</p>
+
               <p style={{ margin: "6px 0", color: "#6b7280" }}>
                 🏷 {book.category}
               </p>
@@ -239,5 +242,13 @@ export default function HomePage() {
           ))}
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<p>Loading...</p>}>
+      <HomePageContent />
+    </Suspense>
   );
 }
