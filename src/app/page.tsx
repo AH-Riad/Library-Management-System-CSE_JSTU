@@ -20,8 +20,7 @@ function HomePageContent() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const q = searchParams.get("search") || "";
-    setSearch(q);
+    setSearch(searchParams.get("search") || "");
   }, [searchParams]);
 
   useEffect(() => {
@@ -79,6 +78,7 @@ function HomePageContent() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
+      {/* HEADER */}
       <div
         style={{
           display: "flex",
@@ -92,44 +92,152 @@ function HomePageContent() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0 }}>📚 CSE Library System</h1>
+          <h1 style={{ margin: 0, fontSize: "22px" }}>📚 CSE Library System</h1>
+          <p style={{ margin: 0, fontSize: "13px", opacity: 0.7 }}>
+            Manage and borrow books easily
+          </p>
         </div>
 
-        <SignedIn>
-          <SignOutButton>
-            <button
-              style={{
-                color: "red",
-                background: "transparent",
-                border: "none",
-              }}
-            >
-              Logout
-            </button>
-          </SignOutButton>
-        </SignedIn>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <SignedOut>
+            <SignInButton>
+              <button
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#2563eb",
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
 
-        <SignedOut>
-          <SignInButton>
-            <button>Sign In</button>
-          </SignInButton>
-        </SignedOut>
+          <SignedIn>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ margin: 0, fontSize: "14px" }}>
+                👋 {user?.firstName || "User"}
+              </p>
+
+              <SignOutButton>
+                <button
+                  style={{
+                    marginTop: "4px",
+                    fontSize: "12px",
+                    color: "#f87171",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Logout
+                </button>
+              </SignOutButton>
+            </div>
+          </SignedIn>
+        </div>
       </div>
 
-      <h2>Available Books</h2>
+      {/* CONTENT */}
+      <h2 style={{ marginTop: "10px" }}>Available Books</h2>
 
-      {loading && <p>Loading...</p>}
+      {loading && <p style={{ color: "#666" }}>Loading books...</p>}
 
-      <div style={{ display: "grid", gap: 16 }}>
+      {!loading && books.length === 0 && (
+        <p style={{ color: "#888" }}>No books available right now.</p>
+      )}
+
+      {/* GRID */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+          gap: "18px",
+          marginTop: "16px",
+        }}
+      >
         {books
-          .filter((b) => b.title?.toLowerCase().includes(search.toLowerCase()))
+          .filter((book) =>
+            book.title?.toLowerCase().includes(search.toLowerCase()),
+          )
           .map((book) => (
-            <div key={book._id}>
-              <h3>{book.title}</h3>
-              <p>{book.author}</p>
-              <p>{book.category}</p>
+            <div
+              key={book._id}
+              style={{
+                borderRadius: "16px",
+                padding: "14px",
+                background: "#ffffff",
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+                transition: "all 0.25s ease",
+                cursor: "pointer",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "translateY(-5px)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "translateY(0)")
+              }
+            >
+              {/* IMAGE */}
+              {book.image && (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "220px",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    background: "#f3f4f6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <img
+                    src={book.image}
+                    alt={book.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
+              )}
 
-              <button onClick={() => borrowBook(book._id)}>Borrow</button>
+              {/* TEXT */}
+              <h3 style={{ marginBottom: "6px", color: "#111827" }}>
+                {book.title}
+              </h3>
+
+              <p style={{ margin: 0, color: "#4b5563" }}>👤 {book.author}</p>
+
+              <p style={{ margin: "6px 0", color: "#6b7280" }}>
+                🏷 {book.category}
+              </p>
+
+              {/* BUTTON */}
+              <button
+                onClick={() => borrowBook(book._id)}
+                style={{
+                  marginTop: "12px",
+                  padding: "10px",
+                  background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  width: "100%",
+                  fontWeight: 600,
+                  transition: "0.2s",
+                }}
+              >
+                Borrow Book
+              </button>
             </div>
           ))}
       </div>
