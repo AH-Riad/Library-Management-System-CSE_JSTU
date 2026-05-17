@@ -9,13 +9,9 @@ export async function GET() {
 
     const books = await Book.find().sort({ createdAt: -1 });
 
-    return NextResponse.json({
-      success: true,
-      books,
-    });
+    return NextResponse.json({ success: true, books });
   } catch (error) {
     console.log("GET BOOK ERROR:", error);
-
     return NextResponse.json({ success: false, books: [] }, { status: 500 });
   }
 }
@@ -24,72 +20,57 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    // 📦 Use FormData for file upload
     const formData = await req.formData();
 
-    const title = formData.get("title") as string;
-    const author = formData.get("author") as string;
-    const category = formData.get("category") as string;
-    const availableCopies = formData.get("availableCopies");
+    const title = String(formData.get("title") || "").trim();
+    const author = String(formData.get("author") || "").trim();
+    const category = String(formData.get("category") || "").trim();
+    const availableCopies = Number(formData.get("availableCopies") || 1);
     const image = formData.get("image") as File | null;
 
-    // ❌ VALIDATION
-    if (!title?.trim() || !author?.trim() || !category?.trim()) {
+    if (!title || !author || !category) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Title, author, and category are required",
-        },
+        { success: false, message: "Missing required fields" },
         { status: 400 },
       );
     }
 
     let imageUrl = "";
 
-    // 📸 CLOUDINARY UPLOAD
     if (image) {
       const buffer = Buffer.from(await image.arrayBuffer());
 
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            { folder: "library-books" },
-            (err: any, result: any) => {
-              if (err) return reject(err);
-              resolve(result);
-            },
-          )
-          .end(buffer);
-      });
+      imageUrl = await new Promise<string>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "library-books" },
+          (err: any, result: any) => {
+            if (err) return reject(err);
+            resolve(result.secure_url);
+          },
+        );
 
-      imageUrl = uploadResult.secure_url;
+        stream.end(buffer);
+      });
     }
 
-    // 🔢 SAFE NUMBER
-    const copies = Number(availableCopies);
-
     const book = await Book.create({
-      title: title.trim(),
-      author: author.trim(),
-      category: category.trim(),
-      availableCopies: Number.isFinite(copies) && copies > 0 ? copies : 1,
-
+      title,
+      author,
+      category,
+      availableCopies: isNaN(availableCopies) ? 1 : availableCopies,
       image: imageUrl,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Book added successfully",
+      message: "Book created successfully",
       book,
     });
   } catch (error: any) {
-    console.log("BOOK ERROR:", error);
+    console.log(error);
 
     return NextResponse.json(
-      {
-        success: false,
-        message: error?.message || "Server error while creating book",
-      },
+      { success: false, message: error.message },
       { status: 500 },
     );
   }
