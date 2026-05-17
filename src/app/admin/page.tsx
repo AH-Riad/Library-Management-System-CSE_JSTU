@@ -134,7 +134,6 @@ export default function AdminPage() {
     fetchData();
   };
 
-  /* LOGIN */
   if (!authorized) {
     return (
       <div style={loginWrapper}>
@@ -183,30 +182,30 @@ export default function AdminPage() {
       </div>
 
       <div style={main}>
-        {loading && <p style={{ color: "#111" }}>Loading...</p>}
+        {loading && <p>Loading...</p>}
 
         {/* DASHBOARD */}
         {activeTab === "dashboard" && (
           <div style={dashGrid}>
             <div style={dashCard}>
-              <h2>{books.length}</h2>
+              <h2>{books?.length ?? 0}</h2>
               <p>Books</p>
             </div>
             <div style={dashCard}>
-              <h2>{pending.length}</h2>
+              <h2>{pending?.length ?? 0}</h2>
               <p>Pending</p>
             </div>
             <div style={dashCard}>
-              <h2>{returns.length}</h2>
+              <h2>{returns?.length ?? 0}</h2>
               <p>Returns</p>
             </div>
           </div>
         )}
 
-        {/* ADD BOOK - ONLY CHANGE IS HERE */}
+        {/* ADD BOOK */}
         {activeTab === "add" && (
           <form onSubmit={addBook} style={card}>
-            <h2 style={{ color: "#111" }}>Add Book</h2>
+            <h2>Add Book</h2>
 
             <input
               value={title}
@@ -220,25 +219,12 @@ export default function AdminPage() {
               placeholder="Author"
               style={input}
             />
-
-            {/* ✅ DROPDOWN RESTORED */}
-            <select
+            <input
               value={category}
               onChange={(e) => setCategory(e.target.value)}
+              placeholder="Category"
               style={input}
-            >
-              <option value="">Select Category</option>
-              <option>Data Structures</option>
-              <option>Algorithms</option>
-              <option>Operating Systems</option>
-              <option>Database Systems</option>
-              <option>Computer Networks</option>
-              <option>Software Engineering</option>
-              <option>Artificial Intelligence</option>
-              <option>Machine Learning</option>
-              <option>Web Development</option>
-              <option>Programming Basics</option>
-            </select>
+            />
 
             <input
               type="number"
@@ -263,57 +249,90 @@ export default function AdminPage() {
           <div style={grid}>
             {books.map((b) => (
               <div key={b._id} style={glassCard}>
-                <h3 style={{ color: "#111" }}>{b.title}</h3>
-                <p style={{ color: "#333" }}>{b.author}</p>
-                <p style={{ color: "#555" }}>{b.category}</p>
+                {b.image && (
+                  <img
+                    src={b.image}
+                    alt={b.title}
+                    style={{
+                      width: "100%",
+                      height: "180px",
+                      objectFit: "cover",
+                      borderRadius: "10px",
+                      marginBottom: "10px",
+                    }}
+                  />
+                )}
+
+                <h3>{b.title}</h3>
+                <p>{b.author}</p>
+                <p>{b.category}</p>
               </div>
             ))}
           </div>
         )}
 
-        {/* REQUESTS (UNCHANGED) */}
+        {/* REQUESTS */}
         {activeTab === "requests" && (
           <>
-            <h2 style={{ color: "#111" }}>Pending Requests</h2>
+            <h2>Pending Requests</h2>
 
             <div style={grid}>
-              {pending.map((r) => {
-                const userDisplay = r.userName || r.userEmail || r.userId;
+              {pending.map((r) => (
+                <div key={r._id} style={glassCard}>
+                  {/* ✅ FIX: BOOK IMAGE ADDED */}
+                  {r.bookId?.image && (
+                    <img
+                      src={r.bookId.image}
+                      style={{
+                        width: "100%",
+                        height: "160px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        marginBottom: "10px",
+                      }}
+                    />
+                  )}
 
-                return (
-                  <div key={r._id} style={glassCard}>
-                    <h3 style={{ color: "#111" }}>{r.bookId?.title}</h3>
-                    <p style={{ color: "#333" }}>👤 {userDisplay}</p>
+                  <h3>{r.bookId?.title}</h3>
+                  <p>👤 {r.userName || r.userEmail || r.userId}</p>
+                  <p>{r.userEmail}</p>
 
-                    <button onClick={() => approve(r._id)} style={btn}>
-                      Approve
-                    </button>
-                  </div>
-                );
-              })}
+                  <button onClick={() => approve(r._id)} style={btn}>
+                    Approve
+                  </button>
+                </div>
+              ))}
             </div>
 
-            <h2 style={{ marginTop: 30, color: "#111" }}>Return Requests</h2>
+            <h2 style={{ marginTop: 30 }}>Return Requests</h2>
 
             <div style={grid}>
-              {returns.map((r) => {
-                const userDisplay = r.userName || r.userEmail || r.userId;
+              {returns.map((r) => (
+                <div key={r._id} style={glassCard}>
+                  {/* ✅ FIX: BOOK IMAGE ADDED */}
+                  {r.bookId?.image && (
+                    <img
+                      src={r.bookId.image}
+                      style={{
+                        width: "100%",
+                        height: "160px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        marginBottom: "10px",
+                      }}
+                    />
+                  )}
 
-                return (
-                  <div key={r._id} style={glassCard}>
-                    <h3 style={{ color: "#111" }}>{r.bookId?.title}</h3>
-                    <p style={{ color: "#333" }}>👤 {userDisplay}</p>
+                  <h3>{r.bookId?.title}</h3>
+                  <p>👤 {r.userName || r.userEmail || r.userId}</p>
 
-                    {r.fine > 0 && (
-                      <p style={{ color: "red" }}>💰 {r.fine} TK</p>
-                    )}
+                  {r.fine > 0 && <p>💰 {r.fine} TK</p>}
 
-                    <button onClick={() => markReturned(r._id)} style={btn}>
-                      Mark Returned
-                    </button>
-                  </div>
-                );
-              })}
+                  <button onClick={() => markReturned(r._id)} style={btn}>
+                    Mark Returned
+                  </button>
+                </div>
+              ))}
             </div>
           </>
         )}
@@ -323,11 +342,7 @@ export default function AdminPage() {
 }
 
 /* styles unchanged */
-const layout = {
-  display: "flex",
-  minHeight: "100vh",
-  background: "transparent",
-};
+const layout = { display: "flex", minHeight: "100vh" };
 const sidebar = {
   width: 240,
   background: "#0f172a",
@@ -338,33 +353,40 @@ const sidebar = {
   gap: 10,
 };
 const main = { flex: 1, padding: 20 };
+
 const item = (a: boolean) => ({
   padding: 10,
-  borderRadius: 8,
   background: a ? "#2563eb" : "transparent",
+  borderRadius: 8,
 });
+
 const grid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
   gap: 16,
 };
+
 const glassCard = {
   padding: 16,
   borderRadius: 16,
-  background: "rgba(255,255,255,0.85)",
+  background: "rgba(255,255,255,0.9)",
 };
+
 const dashGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(3,1fr)",
   gap: 16,
 };
+
 const dashCard = {
   padding: 20,
   borderRadius: 12,
-  background: "rgba(255,255,255,0.85)",
+  background: "rgba(255,255,255,0.9)",
   textAlign: "center" as const,
 };
+
 const input = { width: "100%", padding: 10, margin: "8px 0" };
+
 const btn = {
   padding: 10,
   background: "#2563eb",
@@ -373,22 +395,26 @@ const btn = {
   borderRadius: 8,
   width: "100%",
 };
+
 const logoutBtn = {
   marginTop: "auto",
   background: "red",
   color: "white",
   padding: 10,
 };
+
 const loginWrapper = {
   height: "100vh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
 };
+
 const loginCard = {
   padding: 20,
   borderRadius: 12,
   background: "white",
   width: 320,
 };
+
 const card = { maxWidth: 400 };
