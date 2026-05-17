@@ -18,7 +18,6 @@ export default function HomePage() {
 
   const searchParams = useSearchParams();
 
-  // ✅ FIX: make search reactive
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -80,7 +79,7 @@ export default function HomePage() {
 
   return (
     <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
-      {/* HEADER CARD (UNCHANGED) */}
+      {/* HEADER */}
       <div
         style={{
           display: "flex",
@@ -176,6 +175,21 @@ export default function HomePage() {
                 transition: "0.2s",
               }}
             >
+              {/* ✅ FIX: IMAGE ADDED */}
+              {book.image && (
+                <img
+                  src={book.image}
+                  alt={book.title}
+                  style={{
+                    width: "100%",
+                    height: "160px",
+                    objectFit: "cover",
+                    borderRadius: "10px",
+                    marginBottom: "10px",
+                  }}
+                />
+              )}
+
               <h3 style={{ marginBottom: "6px" }}>{book.title}</h3>
               <p style={{ margin: 0, color: "#555" }}>👤 {book.author}</p>
               <p style={{ margin: "6px 0", color: "#666" }}>
