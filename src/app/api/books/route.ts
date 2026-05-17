@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Book from "@/models/Book";
+import cloudinary from "@/lib/cloudinary";
 
 export async function GET() {
   try {
@@ -23,11 +24,16 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const body = await req.json();
+    // 📦 Use FormData for file upload
+    const formData = await req.formData();
 
-    const { title, author, category, availableCopies } = body;
+    const title = formData.get("title") as string;
+    const author = formData.get("author") as string;
+    const category = formData.get("category") as string;
+    const availableCopies = formData.get("availableCopies");
+    const image = formData.get("image") as File | null;
 
-    // ✅ VALIDATION (safe + trimmed check)
+    // ❌ VALIDATION
     if (!title?.trim() || !author?.trim() || !category?.trim()) {
       return NextResponse.json(
         {
@@ -38,7 +44,28 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 FIX: normalize number safely
+    let imageUrl = "";
+
+    // 📸 CLOUDINARY UPLOAD
+    if (image) {
+      const buffer = Buffer.from(await image.arrayBuffer());
+
+      const uploadResult = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: "library-books" },
+            (err: any, result: any) => {
+              if (err) return reject(err);
+              resolve(result);
+            },
+          )
+          .end(buffer);
+      });
+
+      imageUrl = uploadResult.secure_url;
+    }
+
+    // 🔢 SAFE NUMBER
     const copies = Number(availableCopies);
 
     const book = await Book.create({
@@ -46,6 +73,8 @@ export async function POST(req: Request) {
       author: author.trim(),
       category: category.trim(),
       availableCopies: Number.isFinite(copies) && copies > 0 ? copies : 1,
+
+      image: imageUrl,
     });
 
     return NextResponse.json({

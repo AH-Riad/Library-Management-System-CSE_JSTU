@@ -24,10 +24,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const auth = localStorage.getItem("admin_auth");
-
-      if (auth === "true") {
-        setAuthorized(true);
-      }
+      if (auth === "true") setAuthorized(true);
     }
   }, []);
 
@@ -36,9 +33,7 @@ export default function AdminPage() {
 
     if (username === "admin" && password === "12345") {
       localStorage.setItem("admin_auth", "true");
-
       setAuthorized(true);
-
       toast.success("Login successful");
     } else {
       toast.error("Wrong credentials");
@@ -47,16 +42,14 @@ export default function AdminPage() {
 
   const logout = () => {
     localStorage.removeItem("admin_auth");
-
     setAuthorized(false);
-
     toast.success("Logged out");
   };
 
   const fetchData = async () => {
-    try {
-      setLoading(true);
+    setLoading(true);
 
+    try {
       const [b, p, r] = await Promise.all([
         fetch("/api/books"),
         fetch("/api/admin/requests/pending"),
@@ -72,7 +65,6 @@ export default function AdminPage() {
       setReturns(rd?.requests || []);
     } catch (err) {
       console.log(err);
-
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
@@ -80,99 +72,40 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (authorized) {
-      fetchData();
-    }
+    if (authorized) fetchData();
   }, [authorized]);
-
-  const addBook = async (e: any) => {
-    e.preventDefault();
-
-    if (!title || !author || !category) {
-      toast.error("Fill all fields");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/books", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          author: author.trim(),
-          category: category.trim(),
-          availableCopies: Number(copies) || 1,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toast.error(data.message || "Failed to add book");
-        return;
-      }
-
-      toast.success("Book added successfully");
-
-      setTitle("");
-      setAuthor("");
-      setCategory("");
-      setCopies(1);
-
-      fetchData();
-    } catch (err) {
-      console.log(err);
-
-      toast.error("Server error");
-    }
-  };
 
   const approve = async (requestId: string) => {
     try {
-      const res = await fetch("/api/admin/approve", {
+      await fetch("/api/admin/approve", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId }),
       });
 
-      if (!res.ok) {
-        throw new Error();
-      }
-
-      toast.success("Book issued successfully");
-
+      toast.success("Approved");
       fetchData();
     } catch {
-      toast.error("Failed to approve");
+      toast.error("Failed");
     }
   };
 
   const markReturned = async (requestId: string) => {
     try {
-      const res = await fetch("/api/admin/return", {
+      await fetch("/api/admin/return", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ requestId }),
       });
 
-      if (!res.ok) {
-        throw new Error();
-      }
-
-      toast.success("Book marked as returned");
-
+      toast.success("Returned");
       fetchData();
     } catch {
-      toast.error("Failed to update return");
+      toast.error("Failed");
     }
   };
 
+  /* ================= LOGIN ================= */
   if (!authorized) {
     return (
       <div style={loginWrapper}>
@@ -185,7 +118,6 @@ export default function AdminPage() {
             onChange={(e) => setUsername(e.target.value)}
             style={input}
           />
-
           <input
             type="password"
             placeholder="Password"
@@ -204,7 +136,7 @@ export default function AdminPage() {
     <div style={layout}>
       {/* SIDEBAR */}
       <div style={sidebar}>
-        <h2>Admin Panel</h2>
+        <h2 style={{ marginBottom: 20 }}>Admin Panel</h2>
 
         {["dashboard", "books", "add", "requests"].map((tab) => (
           <div
@@ -227,46 +159,44 @@ export default function AdminPage() {
 
         {/* DASHBOARD */}
         {activeTab === "dashboard" && (
-          <>
-            <h1>Dashboard</h1>
-
-            <p>Total Books: {books.length}</p>
-
-            <p>Pending Requests: {pending.length}</p>
-
-            <p>Return Requests: {returns.length}</p>
-          </>
+          <div style={dashGrid}>
+            <div style={dashCard}>
+              📚<h3>{books.length}</h3>
+              <p>Books</p>
+            </div>
+            <div style={dashCard}>
+              ⏳<h3>{pending.length}</h3>
+              <p>Pending</p>
+            </div>
+            <div style={dashCard}>
+              🔁<h3>{returns.length}</h3>
+              <p>Returns</p>
+            </div>
+          </div>
         )}
 
         {/* ADD BOOK */}
         {activeTab === "add" && (
-          <form onSubmit={addBook} style={card}>
+          <form onSubmit={(e) => e.preventDefault()} style={card}>
             <h2>Add Book</h2>
-
             <input
               placeholder="Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               style={input}
             />
-
             <input
               placeholder="Author"
               value={author}
               onChange={(e) => setAuthor(e.target.value)}
               style={input}
             />
-
-            <select
+            <input
+              placeholder="Category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               style={input}
-            >
-              <option value="">Category</option>
-              <option>Programming</option>
-              <option>AI</option>
-              <option>Database</option>
-            </select>
+            />
 
             <input
               type="number"
@@ -275,87 +205,63 @@ export default function AdminPage() {
               style={input}
             />
 
-            <button style={btn}>Add Book</button>
+            <button style={btn}>Add</button>
           </form>
         )}
 
-        {/* BOOKS */}
+        {/* BOOKS GRID */}
         {activeTab === "books" && (
           <div>
             <h2>Books</h2>
 
-            {books.length > 0 ? (
-              books.map((b) => (
-                <div key={b._id} style={bookCard}>
+            <div style={grid}>
+              {books.map((b) => (
+                <div key={b._id} style={glassCard}>
                   <h3>{b.title}</h3>
-
-                  <p>Author: {b.author}</p>
-
-                  <p>Category: {b.category}</p>
-
-                  <p>Available Copies: {b.availableCopies}</p>
+                  <p>{b.author}</p>
+                  <span>{b.category}</span>
                 </div>
-              ))
-            ) : (
-              <p>No books found</p>
-            )}
+              ))}
+            </div>
           </div>
         )}
 
-        {/* REQUESTS */}
+        {/* REQUESTS GRID */}
         {activeTab === "requests" && (
           <>
-            {/* PENDING */}
             <h2>Pending Requests</h2>
 
-            {pending.length === 0 && <p>No pending requests</p>}
+            <div style={grid}>
+              {pending.map((r) => (
+                <div key={r._id} style={glassCard}>
+                  <h3>{r.bookId?.title}</h3>
+                  <p>👤 {r.userName}</p>
+                  <p>📧 {r.userEmail}</p>
 
-            {pending.map((r) => (
-              <div key={r._id} style={requestCard}>
-                <h3>{r.bookId?.title}</h3>
+                  <button onClick={() => approve(r._id)} style={btnSmall}>
+                    Approve
+                  </button>
+                </div>
+              ))}
+            </div>
 
-                <p>
-                  <b>Student:</b> {r.userName || "Unknown"}
-                </p>
+            <h2 style={{ marginTop: 30 }}>Return Requests</h2>
 
-                <p>
-                  <b>Email:</b> {r.userEmail || "No email"}
-                </p>
+            <div style={grid}>
+              {returns.map((r) => (
+                <div key={r._id} style={glassCard}>
+                  <h3>{r.bookId?.title}</h3>
+                  <p>👤 {r.userName}</p>
+                  <p>📧 {r.userEmail}</p>
 
-                <button onClick={() => approve(r._id)} style={buttonGreen}>
-                  Approve
-                </button>
-              </div>
-            ))}
+                  {r.fine > 0 && <p style={{ color: "red" }}>💰 {r.fine} TK</p>}
 
-            {/* RETURNS */}
-            <h2 style={{ marginTop: "30px" }}>Return Requests</h2>
-
-            {returns.length === 0 && <p>No return requests</p>}
-
-            {returns.map((r) => (
-              <div key={r._id} style={requestCard}>
-                <h3>{r.bookId?.title}</h3>
-
-                <p>
-                  <b>Student:</b> {r.userName || "Unknown"}
-                </p>
-
-                <p>
-                  <b>Email:</b> {r.userEmail || "No email"}
-                </p>
-
-                {r.fine > 0 && (
-                  <p style={{ color: "red", fontWeight: "bold" }}>
-                    Fine: {r.fine} TK
-                  </p>
-                )}
-
-                <button onClick={() => markReturned(r._id)} style={buttonBlue}>
-                  Mark Returned
-                </button>
-              </div>
-            ))}
+                  <button onClick={() => markReturned(r._id)} style={btnSmall}>
+                    Mark Returned
+                  </button>
+                </div>
+              ))}
+            </div>
           </>
         )}
       </div>
@@ -365,10 +271,7 @@ export default function AdminPage() {
 
 /* ================= STYLES ================= */
 
-const layout = {
-  display: "flex",
-  minHeight: "100vh",
-};
+const layout = { display: "flex", minHeight: "100vh", background: "#0b1220" };
 
 const sidebar = {
   width: 240,
@@ -380,16 +283,42 @@ const sidebar = {
   gap: 10,
 };
 
+const main = { flex: 1, padding: 20, color: "white" };
+
 const item = (active: boolean) => ({
   padding: 10,
+  borderRadius: 8,
   cursor: "pointer",
   background: active ? "#2563eb" : "transparent",
-  borderRadius: 8,
 });
 
-const main = {
-  flex: 1,
+const grid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+  gap: 16,
+  marginTop: 10,
+};
+
+const glassCard = {
+  padding: 16,
+  borderRadius: 16,
+  background: "rgba(255,255,255,0.08)",
+  backdropFilter: "blur(14px)",
+  border: "1px solid rgba(255,255,255,0.15)",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+};
+
+const dashGrid = {
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 1fr)",
+  gap: 16,
+};
+
+const dashCard = {
   padding: 20,
+  borderRadius: 16,
+  background: "rgba(255,255,255,0.08)",
+  textAlign: "center" as const,
 };
 
 const input = {
@@ -403,46 +332,17 @@ const btn = {
   background: "#2563eb",
   color: "white",
   border: "none",
-  borderRadius: 8,
+  borderRadius: 10,
   cursor: "pointer",
 };
 
-const requestCard = {
-  border: "1px solid #ddd",
-  borderRadius: 12,
-  padding: 16,
-  marginTop: 12,
-  background: "white",
-};
-
-const bookCard = {
-  border: "1px solid #ddd",
-  borderRadius: 12,
-  padding: 16,
-  marginTop: 12,
-  background: "white",
-};
-
-const buttonGreen = {
-  padding: "10px 14px",
-  background: "green",
-  color: "white",
-  border: "none",
-  borderRadius: 8,
-  cursor: "pointer",
-};
-
-const buttonBlue = {
-  padding: "10px 14px",
+const btnSmall = {
+  marginTop: 10,
+  padding: "8px 12px",
   background: "#2563eb",
   color: "white",
   border: "none",
   borderRadius: 8,
-  cursor: "pointer",
-};
-
-const card = {
-  maxWidth: 400,
 };
 
 const logoutBtn = {
@@ -452,7 +352,10 @@ const logoutBtn = {
   padding: 10,
   border: "none",
   borderRadius: 8,
-  cursor: "pointer",
+};
+
+const card = {
+  maxWidth: 400,
 };
 
 const loginWrapper = {
@@ -464,7 +367,6 @@ const loginWrapper = {
 
 const loginCard = {
   padding: 20,
-  border: "1px solid #ddd",
   borderRadius: 12,
   background: "white",
   width: 320,

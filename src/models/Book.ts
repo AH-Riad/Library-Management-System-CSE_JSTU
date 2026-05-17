@@ -26,12 +26,17 @@ const BookSchema = new mongoose.Schema(
       min: 0,
     },
 
-    // ✅ SAFE OPTIONAL FIELD (no crash, no index issues)
     isbn: {
       type: String,
       default: null,
       index: true,
       sparse: true,
+    },
+
+    // ✅ NEW FIELD (BOOK IMAGE)
+    image: {
+      type: String,
+      default: "",
     },
   },
   {
