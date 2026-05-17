@@ -3,10 +3,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { SignedIn, SignedOut, UserButton, SignInButton } from "@clerk/nextjs";
 
-export default function Navbar() {
+function NavbarContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -32,9 +32,7 @@ export default function Navbar() {
 
   return (
     <nav style={styles.nav}>
-      {/* LEFT (CLICKABLE → HOME) */}
       <Link href="/" style={styles.left}>
-        {/* LOGO */}
         <div style={styles.logoWrapper}>
           <Image
             src="/logo.webp"
@@ -52,7 +50,6 @@ export default function Navbar() {
         </div>
       </Link>
 
-      {/* SEARCH */}
       <form onSubmit={handleSearch} style={styles.searchBox}>
         <input
           value={query}
@@ -66,16 +63,13 @@ export default function Navbar() {
         </button>
       </form>
 
-      {/* RIGHT */}
       <div style={styles.right}>
         <Link style={styles.link} href="/">
           Home
         </Link>
-
         <Link style={styles.link} href="/profile">
           Profile
         </Link>
-
         <Link style={styles.link} href="/admin">
           Admin
         </Link>
@@ -94,6 +88,14 @@ export default function Navbar() {
   );
 }
 
+export default function Navbar() {
+  return (
+    <Suspense fallback={null}>
+      <NavbarContent />
+    </Suspense>
+  );
+}
+
 /* STYLES */
 const styles: Record<string, React.CSSProperties> = {
   nav: {
@@ -109,7 +111,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: "1px solid rgba(255,255,255,0.08)",
   },
 
-  /* 🔥 NOW CLICKABLE */
   left: {
     display: "flex",
     alignItems: "center",
