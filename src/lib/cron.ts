@@ -14,97 +14,80 @@ export function startCronJobs() {
   cron.schedule("* * * * *", async () => {
     console.log("📚 Library cron running...");
 
-    try {
-      await connectDB();
+    await connectDB();
+    const now = new Date();
 
-      const now = new Date();
+    // ✅ ONLY ISSUED BOOKS
+    const issuedBooks = await UserBook.find({
+      status: "issued",
+    }).populate("bookId");
 
-      // ✅ ONLY ACTIVE ISSUED BOOKS (STRICT FILTER)
-      const issuedBooks = await UserBook.find({
-        status: "issued",
-        returnDate: { $exists: false },
-      }).populate("bookId");
+    const client = await clerkClient();
 
-      const client = await clerkClient();
+    for (const record of issuedBooks as any[]) {
+      if (!record.dueDate) continue;
 
-      for (const record of issuedBooks as any[]) {
-        // 🔥 HARD SAFETY GUARD
-        if (record.status !== "issued") continue;
-        if (record.returnDate) continue;
+      const due = new Date(record.dueDate);
 
-        if (!record.dueDate) continue;
+      const diffDays = Math.ceil(
+        (now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24),
+      );
 
-        const due = new Date(record.dueDate);
+      const fine = calculateFine(diffDays);
 
-        const diffDays = Math.ceil(
-          (now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24),
-        );
+      const bookTitle = record.bookId?.title || "Unknown Book";
 
-        const fine = calculateFine(diffDays);
+      // ✅ ALWAYS update fine ONLY for issued books
+      record.fine = diffDays > 7 ? fine : 0;
+      record.daysLate = diffDays > 0 ? diffDays : 0;
+      record.isOverdue = diffDays > 7;
 
-        const bookTitle = record.bookId?.title || "Unknown Book";
+      // ======================
+      // REMINDER
+      // ======================
+      if (diffDays === 8 && !record.reminderSent) {
+        const user = await client.users.getUser(record.userId);
+        const email = user.emailAddresses?.[0]?.emailAddress;
 
-        // 💰 Update fine ONLY for active issued books
-        record.fine = fine;
-
-        // ======================
-        // 📧 DAY 8 REMINDER
-        // ======================
-        if (diffDays === 8 && !record.reminderSent) {
-          try {
-            const user = await client.users.getUser(record.userId);
-            const email = user.emailAddresses?.[0]?.emailAddress;
-
-            if (email) {
-              await sendEmail(
-                email,
-                "📚 Library Reminder - Book Due Soon",
-                `
-                  <h2>Reminder</h2>
-                  <p>Your book <b>${bookTitle}</b> is due soon.</p>
-                  <p>Please return it within 2 days to avoid fine.</p>
-                `,
-              );
-            }
-
-            record.reminderSent = true;
-          } catch (err) {
-            console.log("Reminder email error:", err);
-          }
+        if (email) {
+          await sendEmail(
+            email,
+            "📚 Library Reminder",
+            `
+              <h2>Reminder</h2>
+              <p><b>${bookTitle}</b> is due soon.</p>
+            `,
+          );
         }
 
-        // ======================
-        // ⚠️ OVERDUE EMAIL
-        // ======================
-        if (diffDays >= 10 && !record.overdueAlertSent) {
-          try {
-            const user = await client.users.getUser(record.userId);
-            const email = user.emailAddresses?.[0]?.emailAddress;
-
-            if (email) {
-              await sendEmail(
-                email,
-                "⚠️ Overdue Book Notice",
-                `
-                  <h2>Overdue Notice</h2>
-                  <p>Your book <b>${bookTitle}</b> is overdue.</p>
-                  <p>Current fine: <b>${fine} TK</b></p>
-                `,
-              );
-            }
-
-            record.overdueAlertSent = true;
-          } catch (err) {
-            console.log("Overdue email error:", err);
-          }
-        }
-
-        await record.save();
+        record.reminderSent = true;
       }
 
-      console.log("✅ Cron job completed");
-    } catch (error) {
-      console.log("❌ Cron error:", error);
+      // ======================
+      // OVERDUE ALERT
+      // ======================
+      if (diffDays >= 10 && !record.overdueAlertSent) {
+        const user = await client.users.getUser(record.userId);
+        const email = user.emailAddresses?.[0]?.emailAddress;
+
+        if (email) {
+          await sendEmail(
+            email,
+            "⚠️ Overdue Notice",
+            `
+              <h2>Overdue</h2>
+              <p><b>${bookTitle}</b> is overdue.</p>
+              <p>Fine: ${fine} TK</p>
+            `,
+          );
+        }
+
+        record.overdueAlertSent = true;
+      }
+
+      await record.save();
     }
+
+    console.log("✅ Cron job completed");
   });
 }

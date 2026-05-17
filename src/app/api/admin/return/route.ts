@@ -11,15 +11,9 @@ export async function GET() {
       status: "return_pending",
     }).populate("bookId");
 
-    return NextResponse.json({
-      success: true,
-      requests,
-    });
-  } catch (err) {
-    return NextResponse.json({
-      success: false,
-      requests: [],
-    });
+    return NextResponse.json({ success: true, requests });
+  } catch {
+    return NextResponse.json({ success: false, requests: [] });
   }
 }
 
@@ -36,8 +30,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false }, { status: 404 });
     }
 
+    // ✅ IMPORTANT FIX: STOP FURTHER FINE CALCULATION
     record.status = "returned";
+
+    // ✅ LOCK FINES (VERY IMPORTANT FIX)
+    record.fine = record.fine || 0;
+    record.daysLate = record.daysLate || 0;
+    record.isOverdue = false;
+
     record.returnDate = new Date();
+
     await record.save();
 
     const book = await Book.findById(record.bookId);
@@ -51,7 +53,7 @@ export async function POST(req: Request) {
       success: true,
       message: "Book returned",
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }

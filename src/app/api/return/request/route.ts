@@ -17,6 +17,14 @@ export async function POST(req: Request) {
       );
     }
 
+    // ❗ only allow if issued
+    if (record.status !== "issued") {
+      return NextResponse.json({
+        success: false,
+        message: "Already processed",
+      });
+    }
+
     record.status = "return_pending";
     await record.save();
 
@@ -24,7 +32,7 @@ export async function POST(req: Request) {
       success: true,
       message: "Return request sent",
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 },
