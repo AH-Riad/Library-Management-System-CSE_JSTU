@@ -24,7 +24,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const auth = localStorage.getItem("admin_auth");
-      if (auth === "true") setAuthorized(true);
+
+      if (auth === "true") {
+        setAuthorized(true);
+      }
     }
   }, []);
 
@@ -33,7 +36,9 @@ export default function AdminPage() {
 
     if (username === "admin" && password === "12345") {
       localStorage.setItem("admin_auth", "true");
+
       setAuthorized(true);
+
       toast.success("Login successful");
     } else {
       toast.error("Wrong credentials");
@@ -42,14 +47,16 @@ export default function AdminPage() {
 
   const logout = () => {
     localStorage.removeItem("admin_auth");
+
     setAuthorized(false);
+
     toast.success("Logged out");
   };
 
   const fetchData = async () => {
-    setLoading(true);
-
     try {
+      setLoading(true);
+
       const [b, p, r] = await Promise.all([
         fetch("/api/books"),
         fetch("/api/admin/requests/pending"),
@@ -65,6 +72,7 @@ export default function AdminPage() {
       setReturns(rd?.requests || []);
     } catch (err) {
       console.log(err);
+
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
@@ -72,7 +80,9 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (authorized) fetchData();
+    if (authorized) {
+      fetchData();
+    }
   }, [authorized]);
 
   const addBook = async (e: any) => {
@@ -86,7 +96,9 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/books", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           title: title.trim(),
           author: author.trim(),
@@ -112,6 +124,7 @@ export default function AdminPage() {
       fetchData();
     } catch (err) {
       console.log(err);
+
       toast.error("Server error");
     }
   };
@@ -120,13 +133,18 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/approve", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ requestId }),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        throw new Error();
+      }
 
-      toast.success("Approved");
+      toast.success("Book issued successfully");
+
       fetchData();
     } catch {
       toast.error("Failed to approve");
@@ -137,13 +155,18 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/return", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ requestId }),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        throw new Error();
+      }
 
-      toast.success("Marked returned");
+      toast.success("Book marked as returned");
+
       fetchData();
     } catch {
       toast.error("Failed to update return");
@@ -179,6 +202,7 @@ export default function AdminPage() {
 
   return (
     <div style={layout}>
+      {/* SIDEBAR */}
       <div style={sidebar}>
         <h2>Admin Panel</h2>
 
@@ -197,18 +221,24 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* MAIN */}
       <div style={main}>
         {loading && <p>Loading...</p>}
 
+        {/* DASHBOARD */}
         {activeTab === "dashboard" && (
           <>
             <h1>Dashboard</h1>
-            <p>Books: {books.length}</p>
-            <p>Pending: {pending.length}</p>
-            <p>Returns: {returns.length}</p>
+
+            <p>Total Books: {books.length}</p>
+
+            <p>Pending Requests: {pending.length}</p>
+
+            <p>Return Requests: {returns.length}</p>
           </>
         )}
 
+        {/* ADD BOOK */}
         {activeTab === "add" && (
           <form onSubmit={addBook} style={card}>
             <h2>Add Book</h2>
@@ -245,18 +275,25 @@ export default function AdminPage() {
               style={input}
             />
 
-            <button style={btn}>Add</button>
+            <button style={btn}>Add Book</button>
           </form>
         )}
 
+        {/* BOOKS */}
         {activeTab === "books" && (
           <div>
             <h2>Books</h2>
 
-            {Array.isArray(books) && books.length > 0 ? (
+            {books.length > 0 ? (
               books.map((b) => (
                 <div key={b._id} style={bookCard}>
-                  <p>{b.title}</p>
+                  <h3>{b.title}</h3>
+
+                  <p>Author: {b.author}</p>
+
+                  <p>Category: {b.category}</p>
+
+                  <p>Available Copies: {b.availableCopies}</p>
                 </div>
               ))
             ) : (
@@ -265,24 +302,55 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* REQUESTS */}
         {activeTab === "requests" && (
           <>
+            {/* PENDING */}
             <h2>Pending Requests</h2>
+
+            {pending.length === 0 && <p>No pending requests</p>}
 
             {pending.map((r) => (
               <div key={r._id} style={requestCard}>
-                <p>{r.bookId?.title}</p>
+                <h3>{r.bookId?.title}</h3>
+
+                <p>
+                  <b>Student:</b> {r.userName || "Unknown"}
+                </p>
+
+                <p>
+                  <b>Email:</b> {r.userEmail || "No email"}
+                </p>
+
                 <button onClick={() => approve(r._id)} style={buttonGreen}>
                   Approve
                 </button>
               </div>
             ))}
 
-            <h2>Return Requests</h2>
+            {/* RETURNS */}
+            <h2 style={{ marginTop: "30px" }}>Return Requests</h2>
+
+            {returns.length === 0 && <p>No return requests</p>}
 
             {returns.map((r) => (
               <div key={r._id} style={requestCard}>
-                <p>{r.bookId?.title}</p>
+                <h3>{r.bookId?.title}</h3>
+
+                <p>
+                  <b>Student:</b> {r.userName || "Unknown"}
+                </p>
+
+                <p>
+                  <b>Email:</b> {r.userEmail || "No email"}
+                </p>
+
+                {r.fine > 0 && (
+                  <p style={{ color: "red", fontWeight: "bold" }}>
+                    Fine: {r.fine} TK
+                  </p>
+                )}
+
                 <button onClick={() => markReturned(r._id)} style={buttonBlue}>
                   Mark Returned
                 </button>
@@ -295,8 +363,12 @@ export default function AdminPage() {
   );
 }
 
-/* STYLES (UNCHANGED) */
-const layout = { display: "flex", minHeight: "100vh" };
+/* ================= STYLES ================= */
+
+const layout = {
+  display: "flex",
+  minHeight: "100vh",
+};
 
 const sidebar = {
   width: 240,
@@ -315,7 +387,10 @@ const item = (active: boolean) => ({
   borderRadius: 8,
 });
 
-const main = { flex: 1, padding: 20 };
+const main = {
+  flex: 1,
+  padding: 20,
+};
 
 const input = {
   width: "100%",
@@ -328,40 +403,56 @@ const btn = {
   background: "#2563eb",
   color: "white",
   border: "none",
-};
-
-const buttonGreen = {
-  padding: 8,
-  background: "green",
-  color: "white",
-  marginRight: 10,
-};
-
-const buttonBlue = {
-  padding: 8,
-  background: "#2563eb",
-  color: "white",
+  borderRadius: 8,
+  cursor: "pointer",
 };
 
 const requestCard = {
   border: "1px solid #ddd",
-  padding: 10,
-  marginTop: 10,
+  borderRadius: 12,
+  padding: 16,
+  marginTop: 12,
+  background: "white",
 };
 
 const bookCard = {
   border: "1px solid #ddd",
-  padding: 10,
-  marginTop: 10,
+  borderRadius: 12,
+  padding: 16,
+  marginTop: 12,
+  background: "white",
 };
 
-const card = { maxWidth: 400 };
+const buttonGreen = {
+  padding: "10px 14px",
+  background: "green",
+  color: "white",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const buttonBlue = {
+  padding: "10px 14px",
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
+};
+
+const card = {
+  maxWidth: 400,
+};
 
 const logoutBtn = {
   marginTop: "auto",
   background: "red",
   color: "white",
   padding: 10,
+  border: "none",
+  borderRadius: 8,
+  cursor: "pointer",
 };
 
 const loginWrapper = {
@@ -374,4 +465,7 @@ const loginWrapper = {
 const loginCard = {
   padding: 20,
   border: "1px solid #ddd",
+  borderRadius: 12,
+  background: "white",
+  width: 320,
 };

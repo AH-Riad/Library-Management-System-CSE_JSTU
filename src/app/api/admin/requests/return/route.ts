@@ -3,19 +3,51 @@ import { connectDB } from "@/lib/mongodb";
 import UserBook from "@/models/UserBook";
 import Book from "@/models/Book";
 
+import { clerkClient } from "@clerk/nextjs/server";
+
 export async function GET() {
   try {
     await connectDB();
 
     const requests = await UserBook.find({
       status: "return_pending",
-    }).populate("bookId");
+    })
+      .populate("bookId")
+      .sort({ createdAt: -1 });
+
+    const client = await clerkClient();
+
+    const formattedRequests = await Promise.all(
+      requests.map(async (request: any) => {
+        try {
+          const user = await client.users.getUser(request.userId);
+
+          return {
+            ...request.toObject(),
+
+            userName:
+              `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+              "Unknown User",
+
+            userEmail: user.emailAddresses?.[0]?.emailAddress || "No Email",
+          };
+        } catch {
+          return {
+            ...request.toObject(),
+            userName: "Unknown User",
+            userEmail: "No Email",
+          };
+        }
+      }),
+    );
 
     return NextResponse.json({
       success: true,
-      requests,
+      requests: formattedRequests,
     });
   } catch (err) {
+    console.log(err);
+
     return NextResponse.json({
       success: false,
       requests: [],
@@ -38,6 +70,7 @@ export async function POST(req: Request) {
 
     record.status = "returned";
     record.returnDate = new Date();
+
     await record.save();
 
     const book = await Book.findById(record.bookId);
@@ -49,9 +82,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Book returned",
+      message: "Book returned successfully",
     });
   } catch (err) {
+    console.log(err);
+
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }
