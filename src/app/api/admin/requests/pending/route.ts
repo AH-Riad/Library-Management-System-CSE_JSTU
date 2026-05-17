@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import UserBook from "@/models/UserBook";
 import "@/models/Book";
-
 import { clerkClient } from "@clerk/nextjs/server";
 
 export async function GET() {
@@ -12,32 +11,35 @@ export async function GET() {
     const requests = await UserBook.find({
       status: "pending",
     })
-      .populate("bookId")
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "bookId",
+        select: "title author category image",
+      })
+      .sort({ createdAt: -1 })
+      .lean();
 
     const client = await clerkClient();
 
     const formattedRequests = await Promise.all(
       requests.map(async (request: any) => {
+        let userName = "Unknown User";
+        let userEmail = "No Email";
+
         try {
           const user = await client.users.getUser(request.userId);
 
-          return {
-            ...request.toObject(),
+          userName =
+            `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+            "Unknown User";
 
-            userName:
-              `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-              "Unknown User",
+          userEmail = user.emailAddresses?.[0]?.emailAddress || "No Email";
+        } catch {}
 
-            userEmail: user.emailAddresses?.[0]?.emailAddress || "No Email",
-          };
-        } catch {
-          return {
-            ...request.toObject(),
-            userName: "Unknown User",
-            userEmail: "No Email",
-          };
-        }
+        return {
+          ...request,
+          userName,
+          userEmail,
+        };
       }),
     );
 
@@ -46,14 +48,6 @@ export async function GET() {
       requests: formattedRequests,
     });
   } catch (error) {
-    console.log(error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        requests: [],
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, requests: [] }, { status: 500 });
   }
 }

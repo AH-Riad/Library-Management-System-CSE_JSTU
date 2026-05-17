@@ -134,6 +134,7 @@ export default function AdminPage() {
     fetchData();
   };
 
+  /* LOGIN */
   if (!authorized) {
     return (
       <div style={loginWrapper}>
@@ -163,6 +164,7 @@ export default function AdminPage() {
 
   return (
     <div style={layout}>
+      {/* SIDEBAR */}
       <div style={sidebar}>
         <h2>Admin Panel</h2>
 
@@ -181,6 +183,7 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* MAIN */}
       <div style={main}>
         {loading && <p>Loading...</p>}
 
@@ -188,15 +191,15 @@ export default function AdminPage() {
         {activeTab === "dashboard" && (
           <div style={dashGrid}>
             <div style={dashCard}>
-              <h2>{books?.length ?? 0}</h2>
+              <h2>{books.length}</h2>
               <p>Books</p>
             </div>
             <div style={dashCard}>
-              <h2>{pending?.length ?? 0}</h2>
+              <h2>{pending.length}</h2>
               <p>Pending</p>
             </div>
             <div style={dashCard}>
-              <h2>{returns?.length ?? 0}</h2>
+              <h2>{returns.length}</h2>
               <p>Returns</p>
             </div>
           </div>
@@ -250,17 +253,29 @@ export default function AdminPage() {
             {books.map((b) => (
               <div key={b._id} style={glassCard}>
                 {b.image && (
-                  <img
-                    src={b.image}
-                    alt={b.title}
+                  <div
                     style={{
                       width: "100%",
-                      height: "180px",
-                      objectFit: "cover",
+                      height: "200px",
+                      background: "#f3f4f6",
                       borderRadius: "10px",
+                      overflow: "hidden",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
                       marginBottom: "10px",
                     }}
-                  />
+                  >
+                    <img
+                      src={b.image}
+                      alt={b.title}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                      }}
+                    />
+                  </div>
                 )}
 
                 <h3>{b.title}</h3>
@@ -271,68 +286,98 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* REQUESTS */}
+        {/* REQUESTS (FIXED IMAGE ISSUE ONLY) */}
         {activeTab === "requests" && (
           <>
             <h2>Pending Requests</h2>
 
             <div style={grid}>
-              {pending.map((r) => (
-                <div key={r._id} style={glassCard}>
-                  {/* ✅ FIX: BOOK IMAGE ADDED */}
-                  {r.bookId?.image && (
-                    <img
-                      src={r.bookId.image}
-                      style={{
-                        width: "100%",
-                        height: "160px",
-                        objectFit: "cover",
-                        borderRadius: "10px",
-                        marginBottom: "10px",
-                      }}
-                    />
-                  )}
+              {pending.map((r) => {
+                const book = r.bookId || {};
 
-                  <h3>{r.bookId?.title}</h3>
-                  <p>👤 {r.userName || r.userEmail || r.userId}</p>
-                  <p>{r.userEmail}</p>
+                return (
+                  <div key={r._id} style={glassCard}>
+                    {(book.image || book.bookImage) && (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "180px",
+                          background: "#f3f4f6",
+                          borderRadius: "10px",
+                          overflow: "hidden",
+                          marginBottom: "10px",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <img
+                          src={book.image || book.bookImage}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
+                      </div>
+                    )}
 
-                  <button onClick={() => approve(r._id)} style={btn}>
-                    Approve
-                  </button>
-                </div>
-              ))}
+                    <h3>{book.title || "Unknown Book"}</h3>
+                    <p>👤 {r.userName || r.userEmail || r.userId}</p>
+                    <p>{r.userEmail}</p>
+
+                    <button onClick={() => approve(r._id)} style={btn}>
+                      Approve
+                    </button>
+                  </div>
+                );
+              })}
             </div>
 
             <h2 style={{ marginTop: 30 }}>Return Requests</h2>
 
             <div style={grid}>
-              {returns.map((r) => (
-                <div key={r._id} style={glassCard}>
-                  {/* ✅ FIX: BOOK IMAGE ADDED */}
-                  {r.bookId?.image && (
-                    <img
-                      src={r.bookId.image}
-                      style={{
-                        width: "100%",
-                        height: "160px",
-                        objectFit: "cover",
-                        borderRadius: "10px",
-                        marginBottom: "10px",
-                      }}
-                    />
-                  )}
+              {returns.map((r) => {
+                const book = r.bookId || {};
 
-                  <h3>{r.bookId?.title}</h3>
-                  <p>👤 {r.userName || r.userEmail || r.userId}</p>
+                return (
+                  <div key={r._id} style={glassCard}>
+                    {(book.image || book.bookImage) && (
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "180px",
+                          background: "#f3f4f6",
+                          borderRadius: "10px",
+                          overflow: "hidden",
+                          marginBottom: "10px",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <img
+                          src={book.image || book.bookImage}
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "contain",
+                          }}
+                        />
+                      </div>
+                    )}
 
-                  {r.fine > 0 && <p>💰 {r.fine} TK</p>}
+                    <h3>{book.title || "Unknown Book"}</h3>
+                    <p>👤 {r.userName || r.userEmail || r.userId}</p>
 
-                  <button onClick={() => markReturned(r._id)} style={btn}>
-                    Mark Returned
-                  </button>
-                </div>
-              ))}
+                    {r.fine > 0 && <p>💰 {r.fine} TK</p>}
+
+                    <button onClick={() => markReturned(r._id)} style={btn}>
+                      Mark Returned
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
@@ -341,7 +386,7 @@ export default function AdminPage() {
   );
 }
 
-/* styles unchanged */
+/* styles (UNCHANGED) */
 const layout = { display: "flex", minHeight: "100vh" };
 const sidebar = {
   width: 240,
@@ -353,40 +398,33 @@ const sidebar = {
   gap: 10,
 };
 const main = { flex: 1, padding: 20 };
-
 const item = (a: boolean) => ({
   padding: 10,
   background: a ? "#2563eb" : "transparent",
   borderRadius: 8,
 });
-
 const grid = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
   gap: 16,
 };
-
 const glassCard = {
   padding: 16,
   borderRadius: 16,
   background: "rgba(255,255,255,0.9)",
 };
-
 const dashGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(3,1fr)",
   gap: 16,
 };
-
 const dashCard = {
   padding: 20,
   borderRadius: 12,
   background: "rgba(255,255,255,0.9)",
   textAlign: "center" as const,
 };
-
 const input = { width: "100%", padding: 10, margin: "8px 0" };
-
 const btn = {
   padding: 10,
   background: "#2563eb",
@@ -395,26 +433,22 @@ const btn = {
   borderRadius: 8,
   width: "100%",
 };
-
 const logoutBtn = {
   marginTop: "auto",
   background: "red",
   color: "white",
   padding: 10,
 };
-
 const loginWrapper = {
   height: "100vh",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
 };
-
 const loginCard = {
   padding: 20,
   borderRadius: 12,
   background: "white",
   width: 320,
 };
-
 const card = { maxWidth: 400 };
