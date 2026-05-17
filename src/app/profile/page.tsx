@@ -78,19 +78,31 @@ export default function ProfilePage() {
               color: "#0f172a",
             }}
           >
-            {/* ✅ BOOK IMAGE FIX */}
+            {/* ✅ FIXED IMAGE (NO CROPPING LIKE HOME PAGE) */}
             {record.bookId?.image && (
-              <img
-                src={record.bookId.image}
-                alt={record.bookId?.title}
+              <div
                 style={{
                   width: "100%",
                   height: "180px",
-                  objectFit: "cover", // keeps full image nicely cropped (not stretched)
+                  background: "#f3f4f6",
                   borderRadius: "12px",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   marginBottom: "10px",
                 }}
-              />
+              >
+                <img
+                  src={record.bookId.image}
+                  alt={record.bookId?.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain", // ✅ SAME AS HOME PAGE (FIXED)
+                  }}
+                />
+              </div>
             )}
 
             <p>
