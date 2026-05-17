@@ -17,7 +17,6 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
 
   const searchParams = useSearchParams();
-
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -167,47 +166,71 @@ export default function HomePage() {
             <div
               key={book._id}
               style={{
-                borderRadius: "14px",
-                padding: "16px",
-                background: "white",
-                boxShadow: "0 6px 16px rgba(0,0,0,0.08)",
+                borderRadius: "16px",
+                padding: "14px",
+                background: "#ffffff",
                 border: "1px solid #e5e7eb",
-                transition: "0.2s",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+                transition: "all 0.25s ease",
+                cursor: "pointer",
               }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.transform = "translateY(-5px)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.transform = "translateY(0)")
+              }
             >
-              {/* ✅ FIX: IMAGE ADDED */}
+              {/* IMAGE */}
               {book.image && (
-                <img
-                  src={book.image}
-                  alt={book.title}
+                <div
                   style={{
                     width: "100%",
-                    height: "160px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
-                    marginBottom: "10px",
+                    height: "220px",
+                    borderRadius: "12px",
+                    overflow: "hidden",
+                    background: "#f3f4f6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: "12px",
                   }}
-                />
+                >
+                  <img
+                    src={book.image}
+                    alt={book.title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                    }}
+                  />
+                </div>
               )}
 
-              <h3 style={{ marginBottom: "6px" }}>{book.title}</h3>
-              <p style={{ margin: 0, color: "#555" }}>👤 {book.author}</p>
-              <p style={{ margin: "6px 0", color: "#666" }}>
+              {/* TEXT */}
+              <h3 style={{ marginBottom: "6px", color: "#111827" }}>
+                {book.title}
+              </h3>
+              <p style={{ margin: 0, color: "#4b5563" }}>👤 {book.author}</p>
+              <p style={{ margin: "6px 0", color: "#6b7280" }}>
                 🏷 {book.category}
               </p>
 
+              {/* BUTTON */}
               <button
                 onClick={() => borrowBook(book._id)}
                 style={{
                   marginTop: "12px",
                   padding: "10px",
-                  background: "#2563eb",
+                  background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
                   color: "white",
                   border: "none",
                   borderRadius: "10px",
                   cursor: "pointer",
                   width: "100%",
-                  fontWeight: 500,
+                  fontWeight: 600,
+                  transition: "0.2s",
                 }}
               >
                 Borrow Book
