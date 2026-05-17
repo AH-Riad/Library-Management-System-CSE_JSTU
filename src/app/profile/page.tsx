@@ -53,13 +53,12 @@ export default function ProfilePage() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: "20px", maxWidth: "1100px", margin: "0 auto" }}>
       <h1 style={{ marginBottom: "16px", color: "#0f172a" }}>📚 My Books</h1>
 
       {loading && <p>Loading...</p>}
       {!loading && records.length === 0 && <p>No books found</p>}
 
-      {/* GRID */}
       <div
         style={{
           display: "grid",
@@ -73,18 +72,27 @@ export default function ProfilePage() {
             style={{
               padding: "14px",
               borderRadius: "16px",
-
-              /* ✅ TRUE GLASS TRANSPARENCY */
-              background: "rgba(255, 255, 255, 0.12)",
-              backdropFilter: "blur(18px)",
-              WebkitBackdropFilter: "blur(18px)",
-
-              border: "1px solid rgba(255, 255, 255, 0.25)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-
+              background: "white",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+              border: "1px solid #e5e7eb",
               color: "#0f172a",
             }}
           >
+            {/* ✅ BOOK IMAGE FIX */}
+            {record.bookId?.image && (
+              <img
+                src={record.bookId.image}
+                alt={record.bookId?.title}
+                style={{
+                  width: "100%",
+                  height: "180px",
+                  objectFit: "cover", // keeps full image nicely cropped (not stretched)
+                  borderRadius: "12px",
+                  marginBottom: "10px",
+                }}
+              />
+            )}
+
             <p>
               <b>Book:</b> {record.bookId?.title}
             </p>
@@ -97,33 +105,28 @@ export default function ProfilePage() {
               <b>Status:</b> {record.status}
             </p>
 
-            {/* FINE */}
             {record.fine > 0 && (
               <p style={{ color: "#dc2626", fontWeight: 700 }}>
                 💰 Fine: {record.fine} TK
               </p>
             )}
 
-            {/* LATE */}
             {record.daysLate > 0 && (
               <p style={{ color: "#d97706" }}>
                 ⏱ Late by {record.daysLate} days
               </p>
             )}
 
-            {/* OVERDUE */}
             {record.isOverdue && (
               <p style={{ color: "#ef4444", fontWeight: 700 }}>⚠️ Overdue</p>
             )}
 
-            {/* DUE DATE */}
             {record.dueDate && (
               <p>
                 <b>Due:</b> {new Date(record.dueDate).toLocaleDateString()}
               </p>
             )}
 
-            {/* ACTION BUTTON */}
             {record.status === "issued" && (
               <button
                 onClick={() => requestReturn(record._id)}
