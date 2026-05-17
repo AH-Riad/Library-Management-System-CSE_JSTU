@@ -27,8 +27,8 @@ export async function POST(req: Request) {
 
     const { title, author, category, availableCopies } = body;
 
-    // ✅ STRICT VALIDATION (prevents missing field bug)
-    if (!title || !author || !category) {
+    // ✅ VALIDATION (safe + trimmed check)
+    if (!title?.trim() || !author?.trim() || !category?.trim()) {
       return NextResponse.json(
         {
           success: false,
@@ -38,12 +38,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔥 IMPORTANT FIX: NEVER send isbn field at all
+    // 🔥 FIX: normalize number safely
+    const copies = Number(availableCopies);
+
     const book = await Book.create({
       title: title.trim(),
       author: author.trim(),
       category: category.trim(),
-      availableCopies: Number(availableCopies ?? 1),
+      availableCopies: Number.isFinite(copies) && copies > 0 ? copies : 1,
     });
 
     return NextResponse.json({

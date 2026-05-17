@@ -5,12 +5,14 @@ const UserBookSchema = new mongoose.Schema(
     userId: {
       type: String,
       required: true,
+      index: true,
     },
 
     bookId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Book",
       required: true,
+      index: true,
     },
 
     issueDate: {
@@ -21,6 +23,7 @@ const UserBookSchema = new mongoose.Schema(
     dueDate: {
       type: Date,
       default: null,
+      index: true,
     },
 
     returnDate: {
@@ -30,18 +33,25 @@ const UserBookSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "pending", // borrow request
-        "issued", // approved borrow
-        "return_pending", // user requested return
-        "returned", // completed
-      ],
+      enum: ["pending", "issued", "return_pending", "returned"],
       default: "pending",
+      index: true,
     },
 
     fine: {
       type: Number,
       default: 0,
+    },
+
+    // 📧 EMAIL CONTROL FLAGS (IMPORTANT FIX)
+    reminderSent: {
+      type: Boolean,
+      default: false,
+    },
+
+    overdueAlertSent: {
+      type: Boolean,
+      default: false,
     },
   },
   {
