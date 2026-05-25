@@ -33,7 +33,6 @@ const BookSchema = new mongoose.Schema(
       sparse: true,
     },
 
-    // ✅ NEW FIELD (BOOK IMAGE)
     image: {
       type: String,
       default: "",
