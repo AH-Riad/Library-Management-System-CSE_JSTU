@@ -31,7 +31,7 @@ export default function AdminPage() {
   const login = (e: any) => {
     e.preventDefault();
 
-    if (username === "admin" && password === "12345") {
+    if (username === "admin" && password === "admin123") {
       localStorage.setItem("admin_auth", "true");
       setAuthorized(true);
       toast.success("Login successful");
