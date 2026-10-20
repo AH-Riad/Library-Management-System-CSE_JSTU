@@ -11,16 +11,20 @@ function NavbarContent() {
   const searchParams = useSearchParams();
 
   const [query, setQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const q = searchParams.get("search") || "";
     setQuery(q);
+    setMenuOpen(false);
   }, [searchParams]);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const trimmed = query.trim();
+
+    setMenuOpen(false);
 
     if (!trimmed) {
       router.push("/");
@@ -31,60 +35,223 @@ function NavbarContent() {
   };
 
   return (
-    <nav style={styles.nav}>
-      <Link href="/" style={styles.left}>
-        <div style={styles.logoWrapper}>
-          <Image
-            src="/logo.webp"
-            alt="University Logo"
-            width={52}
-            height={52}
-            priority
-            style={styles.logoImage}
+    <>
+      <nav className="cse-lib-navbar" style={styles.nav}>
+        <Link
+          href="/"
+          style={styles.left}
+          className="cse-lib-brand"
+          onClick={() => setMenuOpen(false)}
+        >
+          <div className="cse-lib-logo-wrapper" style={styles.logoWrapper}>
+            <Image
+              src="/logo.webp"
+              alt="University Logo"
+              width={52}
+              height={52}
+              priority
+              style={styles.logoImage}
+            />
+          </div>
+
+          <div>
+            <h2 style={styles.title}>CSE Library</h2>
+            <p style={styles.subtitle}>Digital Library System</p>
+          </div>
+        </Link>
+
+        <form
+          onSubmit={handleSearch}
+          style={styles.searchBox}
+          className="cse-lib-search"
+        >
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search books..."
+            aria-label="Search books"
+            style={styles.input}
           />
-        </div>
 
-        <div>
-          <h2 style={styles.title}>CSE Library</h2>
-          <p style={styles.subtitle}>Digital Library System</p>
-        </div>
-      </Link>
+          <button type="submit" style={styles.searchBtn}>
+            Search
+          </button>
+        </form>
 
-      <form onSubmit={handleSearch} style={styles.searchBox}>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search books..."
-          style={styles.input}
-        />
-
-        <button type="submit" style={styles.searchBtn}>
-          Search
+        <button
+          type="button"
+          className="cse-lib-menu-toggle"
+          aria-label={
+            menuOpen ? "Close navigation menu" : "Open navigation menu"
+          }
+          aria-expanded={menuOpen}
+          aria-controls="cse-lib-nav-links"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? (
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          ) : (
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16" />
+              <path d="M4 12h16" />
+              <path d="M4 18h16" />
+            </svg>
+          )}
         </button>
-      </form>
 
-      <div style={styles.right}>
-        <Link style={styles.link} href="/">
-          Home
-        </Link>
-        <Link style={styles.link} href="/profile">
-          Profile
-        </Link>
-        <Link style={styles.link} href="/admin">
-          Admin
-        </Link>
+        <div
+          id="cse-lib-nav-links"
+          className={`cse-lib-nav-links${menuOpen ? " cse-lib-open" : ""}`}
+          style={styles.right}
+        >
+          <Link style={styles.link} onClick={() => setMenuOpen(false)} href="/">
+            Home
+          </Link>
 
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button style={styles.signInBtn}>Sign In</button>
-          </SignInButton>
-        </SignedOut>
+          <Link
+            style={styles.link}
+            onClick={() => setMenuOpen(false)}
+            href="/profile"
+          >
+            Profile
+          </Link>
 
-        <SignedIn>
-          <UserButton afterSignOutUrl="/" />
-        </SignedIn>
-      </div>
-    </nav>
+          <Link
+            style={styles.link}
+            onClick={() => setMenuOpen(false)}
+            href="/admin"
+          >
+            Admin
+          </Link>
+
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button
+                className="cse-lib-sign-in-button"
+                style={styles.signInBtn}
+                onClick={() => setMenuOpen(false)}
+              >
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
+
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
+        </div>
+      </nav>
+
+      {/* Only the layout changes on mobile. Original desktop styles remain intact. */}
+      <style jsx global>{`
+        .cse-lib-menu-toggle {
+          display: none;
+        }
+
+        @media (max-width: 900px) {
+          .cse-lib-navbar {
+            flex-wrap: wrap !important;
+            gap: 12px;
+            padding: 12px 16px !important;
+          }
+
+          .cse-lib-brand {
+            min-width: 0 !important;
+            flex: 1 1 auto;
+          }
+
+          .cse-lib-search {
+            order: 3;
+            flex: 1 1 100% !important;
+            width: 100%;
+            max-width: none !important;
+            min-width: 0;
+            margin: 0 !important;
+            box-sizing: border-box;
+          }
+
+          .cse-lib-search input {
+            min-width: 0;
+            box-sizing: border-box;
+            font-size: 16px;
+          }
+
+          .cse-lib-search button {
+            flex-shrink: 0;
+          }
+
+          .cse-lib-menu-toggle {
+            order: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 44px;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: #1e293b;
+            color: white;
+            cursor: pointer;
+          }
+
+          .cse-lib-nav-links {
+            display: none !important;
+            order: 4;
+            flex: 1 1 100%;
+            flex-direction: column;
+            align-items: stretch !important;
+            gap: 8px !important;
+            width: 100%;
+            min-width: 0;
+            margin-top: 4px;
+          }
+
+          .cse-lib-nav-links.cse-lib-open {
+            display: flex !important;
+          }
+
+          .cse-lib-nav-links a {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px !important;
+            text-align: center;
+          }
+
+          .cse-lib-sign-in-button {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 12px !important;
+          }
+
+          .cse-lib-nav-links > :last-child {
+            align-self: center;
+          }
+        }
+      `}</style>
+    </>
   );
 }
 
@@ -96,7 +263,7 @@ export default function Navbar() {
   );
 }
 
-/* STYLES */
+/* STYLES: preserved from the original Navbar.tsx */
 const styles: Record<string, React.CSSProperties> = {
   nav: {
     display: "flex",
