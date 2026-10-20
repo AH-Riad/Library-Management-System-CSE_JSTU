@@ -235,3 +235,505 @@
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-in-out forwards;
 }
+
+/* The new menu toggle is only displayed at mobile/tablet widths. */
+.cse-lib-menu-toggle {
+  display: none;
+}
+
+/* Mobile-only layout adjustments for the existing library UI.
+   Desktop styling is intentionally left to the original inline styles. */
+@media (max-width: 900px) {
+  /* Navbar: keep the original colors, typography, logo, and controls. */
+  .cse-lib-navbar {
+    box-sizing: border-box;
+    flex-wrap: wrap !important;
+    gap: 12px;
+    padding: 12px 16px !important;
+  }
+
+  .cse-lib-brand {
+    min-width: 0 !important;
+    flex: 1 1 auto;
+  }
+
+  .cse-lib-search {
+    order: 3;
+    box-sizing: border-box;
+    flex: 1 1 100% !important;
+    width: 100%;
+    max-width: none !important;
+    min-width: 0;
+    margin: 0 !important;
+  }
+
+  .cse-lib-search input {
+    box-sizing: border-box;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .cse-lib-search button {
+    flex-shrink: 0;
+  }
+
+  .cse-lib-menu-toggle {
+    order: 2;
+    display: flex;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: #1e293b;
+    color: white;
+  }
+
+  .cse-lib-nav-links {
+    order: 4;
+    display: none !important;
+    box-sizing: border-box;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100%;
+    min-width: 0;
+    margin-top: 4px;
+  }
+
+  .cse-lib-nav-links.cse-lib-open {
+    display: flex !important;
+  }
+
+  .cse-lib-nav-links > a,
+  .cse-lib-nav-links .cse-lib-sign-in-button {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    padding: 12px !important;
+    text-align: center;
+  }
+
+  .cse-lib-nav-links > * {
+    max-width: 100%;
+  }
+
+  /* Main book catalog. */
+  .library-home,
+  .library-profile,
+  .library-dashboard {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .library-book-grid,
+  .library-profile-grid,
+  .library-admin-grid,
+  .library-landing-books-grid {
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(100%, 240px), 1fr)
+    ) !important;
+  }
+
+  .library-book-card,
+  .library-profile-card,
+  .library-admin-grid > *,
+  .library-landing-book-card {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .library-home-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .library-home-header > div {
+    min-width: 0;
+  }
+
+  /* Admin panel: preserve desktop styling while preventing narrow-screen overflow. */
+  .library-admin-layout {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .library-admin-main {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 16px !important;
+  }
+
+  .library-admin-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .library-admin-stats > * {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 12px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .library-admin-add {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .library-admin-add input {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .library-admin-grid > * {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .library-admin-grid > * h3,
+  .library-admin-grid > * p {
+    overflow-wrap: anywhere;
+  }
+
+  /* Landing / sign-up page's existing hero and featured books. */
+  .library-landing-hero {
+    padding: 42px 16px 36px !important;
+  }
+
+  .library-landing-hero-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 28px !important;
+    min-width: 0;
+  }
+
+  .library-landing-hero-grid > * {
+    min-width: 0;
+  }
+
+  .library-landing-title {
+    font-size: clamp(34px, 8vw, 48px) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .library-landing-stats {
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 24px !important;
+    border-radius: 22px !important;
+  }
+
+  .library-landing-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  .library-landing-stats-grid > * {
+    min-width: 0;
+    padding: 14px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .library-landing-stats-grid h3 {
+    font-size: clamp(22px, 6vw, 30px) !important;
+  }
+
+  .library-landing-books {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    padding: 18px 16px !important;
+  }
+
+  .library-landing-books-title {
+    font-size: clamp(28px, 7vw, 36px) !important;
+    overflow-wrap: anywhere;
+  }
+
+  /* Clerk sign-in stays centered and gains breathing room around the viewport. */
+  .library-sign-in-page {
+    box-sizing: border-box;
+    height: auto !important;
+    min-height: calc(100dvh - 80px);
+    min-width: 0;
+    padding: 20px 12px;
+  }
+}
+
+/* The admin menu toggle is hidden unless the viewport is mobile-sized. */
+.library-admin-mobile-header {
+  display: none;
+}
+
+/* Admin panel mobile navigation and full-width content layout. */
+@media (max-width: 768px) {
+  .library-admin-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+    min-height: auto !important;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .library-admin-mobile-header {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    padding: 12px 16px;
+    background: #0f172a;
+    color: #ffffff;
+  }
+
+  .library-admin-mobile-header h2 {
+    margin: 0;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .library-admin-mobile-toggle {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .library-admin-sidebar {
+    display: none !important;
+    box-sizing: border-box;
+    flex-direction: column !important;
+    align-items: stretch;
+    gap: 8px !important;
+    width: 100% !important;
+    min-width: 0;
+    padding: 12px !important;
+  }
+
+  .library-admin-sidebar.library-admin-sidebar-open {
+    display: flex !important;
+  }
+
+  .library-admin-sidebar h2 {
+    display: none;
+  }
+
+  .library-admin-sidebar > div {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 44px;
+    padding: 12px !important;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+
+  .library-admin-sidebar > button {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px !important;
+  }
+
+  .library-admin-main {
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 12px !important;
+    overflow-x: clip;
+  }
+
+  .library-admin-main h2 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: clamp(20px, 5vw, 26px);
+  }
+
+  .library-admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .library-admin-stats > * {
+    min-width: 0;
+    padding: 12px !important;
+  }
+
+  .library-admin-stats h2 {
+    font-size: clamp(22px, 6vw, 28px);
+  }
+
+  .library-admin-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    width: 100%;
+    min-width: 0;
+    gap: 12px !important;
+  }
+
+  .library-admin-grid > * {
+    width: 100%;
+    min-width: 0;
+    padding: 12px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .library-admin-grid img {
+    max-width: 100%;
+  }
+
+  .library-admin-add {
+    width: 100%;
+    max-width: 100% !important;
+  }
+
+  .library-admin-add input,
+  .library-admin-add button {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .library-admin-login {
+    box-sizing: border-box;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    padding: 20px 12px;
+  }
+
+  .library-admin-login-card {
+    box-sizing: border-box;
+    width: min(100%, 360px) !important;
+    min-width: 0;
+  }
+
+  .library-admin-login-card input,
+  .library-admin-login-card button {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cse-lib-brand h2 {
+    font-size: 18px !important;
+  }
+
+  .cse-lib-brand p {
+    font-size: 10px !important;
+  }
+
+  .cse-lib-logo-wrapper {
+    flex-shrink: 0;
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .cse-lib-logo-wrapper img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .library-home,
+  .library-profile {
+    padding: 12px !important;
+  }
+
+  .library-home-header {
+    padding: 14px !important;
+  }
+
+  .library-home-header h1 {
+    font-size: 19px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .library-home-header > div:last-child {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .library-admin-login {
+    box-sizing: border-box;
+    min-height: calc(100dvh - 110px);
+    height: auto !important;
+    padding: 16px;
+  }
+
+  .library-admin-login-card {
+    box-sizing: border-box;
+    width: min(100%, 320px) !important;
+    min-width: 0;
+  }
+
+  .library-admin-stats > * {
+    padding: 10px !important;
+  }
+
+  .library-admin-stats h2 {
+    font-size: 24px;
+  }
+
+  .library-landing-hero {
+    padding: 34px 14px 30px !important;
+  }
+
+  .library-landing-stats {
+    padding: 16px !important;
+  }
+
+  .library-landing-stats-grid {
+    gap: 10px !important;
+  }
+
+  .library-landing-stats-grid > * {
+    padding: 12px !important;
+  }
+
+  .library-landing-books {
+    padding: 16px 12px !important;
+  }
+
+  .library-landing-book-card {
+    padding: 16px !important;
+  }
+
+  .library-dashboard h1 {
+    font-size: clamp(24px, 7vw, 32px);
+    overflow-wrap: anywhere;
+  }
+
+  .library-dashboard p {
+    overflow-wrap: anywhere;
+  }
+
+  .library-background-logo {
+    width: 85vw !important;
+    max-width: 520px;
+  }
+}
