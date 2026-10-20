@@ -1,23 +1,40 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { connectDB } from "@/lib/mongodb";
 import UserBook from "@/models/UserBook";
 
 export async function POST(req: Request) {
   try {
-    await connectDB();
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
 
     const { requestId } = await req.json();
 
-    const record = await UserBook.findById(requestId);
+    if (!requestId || typeof requestId !== "string") {
+      return NextResponse.json(
+        { success: false, message: "Missing request ID" },
+        { status: 400 },
+      );
+    }
+
+    await connectDB();
+
+    // Only allow the signed-in owner to request a return for their own record.
+    const record = await UserBook.findOne({ _id: requestId, userId });
 
     if (!record) {
       return NextResponse.json(
-        { success: false, message: "Not found" },
+        { success: false, message: "Book record not found" },
         { status: 404 },
       );
     }
 
-    // ❗ only allow if issued
     if (record.status !== "issued") {
       return NextResponse.json({
         success: false,
@@ -32,7 +49,9 @@ export async function POST(req: Request) {
       success: true,
       message: "Return request sent",
     });
-  } catch {
+  } catch (error) {
+    console.error("RETURN REQUEST ERROR:", error);
+
     return NextResponse.json(
       { success: false, message: "Server error" },
       { status: 500 },

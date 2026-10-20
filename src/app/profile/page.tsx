@@ -15,10 +15,14 @@ export default function ProfilePage() {
     try {
       setLoading(true);
 
-      const userId = "user_373IwGkB4avKnerIOwo7klUrEK7";
-
-      const res = await fetch(`/api/user/books?userId=${userId}`);
+      // The server derives the active user from the Clerk session.
+      // Do not hardcode a user ID or accept one from the browser.
+      const res = await fetch("/api/user/books", { cache: "no-store" });
       const data = await res.json();
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.message || "Failed to load books");
+      }
 
       setRecords(data.books || []);
     } catch (err) {
@@ -53,13 +57,22 @@ export default function ProfilePage() {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1100px", margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "16px", color: "#0f172a" }}>📚 My Books</h1>
+    <div
+      className="library-profile"
+      style={{ padding: "20px", maxWidth: "1100px", margin: "0 auto" }}
+    >
+      <h1
+        className="library-profile-title"
+        style={{ marginBottom: "16px", color: "#0f172a" }}
+      >
+        📚 My Books
+      </h1>
 
       {loading && <p>Loading...</p>}
       {!loading && records.length === 0 && <p>No books found</p>}
 
       <div
+        className="library-profile-grid"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
@@ -69,6 +82,7 @@ export default function ProfilePage() {
         {records.map((record) => (
           <div
             key={record._id}
+            className="library-profile-card"
             style={{
               padding: "14px",
               borderRadius: "16px",
